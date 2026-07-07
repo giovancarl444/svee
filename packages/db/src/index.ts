@@ -1,6 +1,6 @@
 export * from './schema';
 export * as schema from './schema';
-export { getDb, getPool, closeDb, type Database } from './client';
+export { getDb, getPool, closeDb, setTestDb, clearTestDb, type Database } from './client';
 export { dbCheckpointStore, recordConnectorSync, setConnectorEnabled } from './connectors';
 export {
   upsertItem,
