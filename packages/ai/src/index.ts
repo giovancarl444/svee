@@ -4,6 +4,7 @@ export {
   boundSnippet,
   buildTriagePayload,
   buildEscalatePayload,
+  buildSynthesisPayload,
   MAX_SNIPPET_CHARS,
   type TriagePayload,
   type EscalatePayload,
@@ -13,5 +14,6 @@ export {
   type SynthesisEvent,
 } from './redaction';
 export { writeApiCall, type ApiCallRecord } from './audit';
-export { structuredCall, type StructuredCall, type StructuredResult } from './client';
+export { structuredCall, textCall, type StructuredCall, type StructuredResult, type TextCall } from './client';
 export { classifyTriage, shouldEscalate, type TriageResult } from './triage';
+export { generateTomorrowPlan } from './synthesis';

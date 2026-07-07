@@ -89,3 +89,18 @@ export interface SynthesisPayload {
   loops: SynthesisLoop[];
   events: SynthesisEvent[];
 }
+
+/** Assemble the nightly-synthesis payload. The minimal field types ARE the allowlist. */
+export function buildSynthesisPayload(input: {
+  eveningDate: string;
+  actions: SynthesisAction[];
+  loops: SynthesisLoop[];
+  events: SynthesisEvent[];
+}): SynthesisPayload {
+  return {
+    evening_date: input.eveningDate,
+    actions: input.actions,
+    loops: input.loops,
+    events: input.events,
+  };
+}

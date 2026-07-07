@@ -1,6 +1,7 @@
 import { getLatestBrief } from '@/lib/queries';
 import { fmtDate } from '@/lib/format';
 import { EmptyState } from '@/app/components/EmptyState';
+import { Markdown } from '@/app/components/Markdown';
 import { SectionHeader } from '@/app/components/Section';
 
 export const dynamic = 'force-dynamic';
@@ -16,14 +17,10 @@ export default async function TomorrowPage() {
         note={brief ? `generated ${fmtDate(brief.createdAt)} · ${brief.model}` : 'not generated yet'}
       />
       {!brief ? (
-        <EmptyState
-          line="No plan yet."
-          sub="The nightly synthesis writes this — Phase 2"
-        />
+        <EmptyState line="No plan yet." sub="The nightly synthesis writes this each evening" />
       ) : (
-        // Phase 2 renders content_md as markdown; plain for now.
-        <article className="hairline whitespace-pre-wrap pt-8 leading-relaxed">
-          {brief.contentMd}
+        <article className="hairline pt-6">
+          <Markdown content={brief.contentMd} />
         </article>
       )}
     </>

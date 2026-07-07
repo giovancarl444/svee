@@ -71,3 +71,49 @@ export async function structuredCall<T>(input: StructuredCall): Promise<Structur
 
   return { data: block.input as T, usage, costEstimate };
 }
+
+/**
+ * A free-text call (no forced tool) for prose outputs like the nightly brief.
+ * The `payload` is the allowlisted synthesis input; it is sent AND audited.
+ * We do NOT send `temperature` — Sonnet 5 / Opus 4.8 reject it (see live-docs).
+ */
+export interface TextCall {
+  purpose: string;
+  model: string;
+  system: string;
+  payload: unknown;
+  relatedItemId?: string;
+  maxTokens?: number;
+}
+
+export async function textCall(
+  input: TextCall,
+): Promise<{ text: string; usage: TokenUsage; costEstimate: number }> {
+  const client = getAnthropic();
+  const res = await client.messages.create({
+    model: input.model,
+    max_tokens: input.maxTokens ?? 2000,
+    system: input.system,
+    messages: [{ role: 'user', content: JSON.stringify(input.payload) }],
+  });
+
+  const text = res.content
+    .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+    .map((b) => b.text)
+    .join('\n')
+    .trim();
+
+  const usage: TokenUsage = { input: res.usage.input_tokens, output: res.usage.output_tokens };
+  const costEstimate = estimateCostUsd(input.model, usage);
+
+  await writeApiCall({
+    purpose: input.purpose,
+    model: input.model,
+    ...(input.relatedItemId ? { relatedItemId: input.relatedItemId } : {}),
+    inputSummary: input.payload,
+    tokenUsage: usage,
+    costEstimate,
+  });
+
+  return { text, usage, costEstimate };
+}

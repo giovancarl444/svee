@@ -8,11 +8,11 @@ deadlines, and writes a blunt "what to do tomorrow" brief each evening.
 Private, single-user, **self-hosted-first**. Not a SaaS. Optimized for the
 operator's leverage and privacy — not scale.
 
-> **Status — Phase 1 (Gmail end-to-end) complete.** The full spine runs: Gmail
-> adapter → normalize → encrypted `items` → bulk heuristic + Haiku triage →
-> the Priority view, behind single-operator login. Add Google OAuth creds
-> (`pnpm gmail:auth`) and an `ANTHROPIC_API_KEY` to ingest real mail. See
-> [build phases](#build-phases).
+> **Status — Phase 2 (the brief) complete.** On top of the Gmail spine: open-loop
+> tracking (opens when you owe a reply, auto-closes when you send it) and the
+> nightly **Opus Tomorrow Plan**, rendered in the Tomorrow view. Add Google OAuth
+> creds (`pnpm gmail:auth`) and an `ANTHROPIC_API_KEY` to run it on real mail.
+> See [build phases](#build-phases).
 
 ---
 
@@ -101,8 +101,8 @@ pnpm typecheck && pnpm test   # full workspace check
 | --- | --- | --- |
 | **0 — Skeleton** | Monorepo, full schema + migrations, design tokens, 5 views wired to (empty) data | ✅ **done** |
 | **1 — Gmail e2e** | Gmail adapter → normalize → encrypted items → bulk heuristic + Haiku triage → Priority view; operator login | ✅ **done** |
-| 2 — The brief | Open-loop tracking + nightly Opus Tomorrow Plan | next |
-| 3 — Breadth | IMAP + Calendar, entity unification, Sonnet escalation | — |
+| **2 — The brief** | Open-loop tracking + nightly Opus Tomorrow Plan + Tomorrow view | ✅ **done** |
+| 3 — Breadth | IMAP + Calendar, entity unification, Sonnet escalation | next |
 | 4 — WhatsApp | Isolated, read-only, dependency-pinned module | — |
 | 5 — Polish | Bulk heuristics, importance learning, notifications, audit panel | — |
 

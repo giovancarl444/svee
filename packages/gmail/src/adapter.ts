@@ -13,8 +13,9 @@ import { gmailMessageToNormalized } from './normalize';
 type GmailCheckpoint = Checkpoint & { historyId?: string };
 
 // Bound the first backfill so a huge inbox doesn't cost thousands of quota units
-// on run one. Incremental sync keeps it current after that.
-const BACKFILL_QUERY = 'in:inbox newer_than:30d';
+// on run one. Incremental sync keeps it current after that. Sent mail is included
+// so open loops can close when the operator replies (spec §8).
+const BACKFILL_QUERY = '(in:inbox OR in:sent) newer_than:30d';
 const BACKFILL_MAX_IDS = 2000;
 const CONCURRENCY = 6; // ~well under the 250 quota-units/sec cap at 20 units/get
 

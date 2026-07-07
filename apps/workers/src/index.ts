@@ -4,9 +4,10 @@ import { loadLocalEnv } from '@cortex/config';
 // so import order is safe.
 loadLocalEnv();
 
-import { closeDb } from '@cortex/db';
+import { closeDb, reconcileLoops } from '@cortex/db';
 import { runIngest } from './ingest';
 import { log } from './logger';
+import { runSynthesis } from './synthesize';
 import { runTriage } from './triage';
 
 const command = process.argv[2] ?? 'help';
@@ -19,18 +20,23 @@ async function main(): Promise<void> {
     case 'triage':
       log.info(await runTriage(), 'triage complete');
       break;
+    case 'loops':
+      await reconcileLoops();
+      log.info('loops reconciled');
+      break;
     case 'sync': {
       const ingest = await runIngest();
       const triage = await runTriage();
-      log.info({ ...ingest, ...triage }, 'sync complete (ingest + triage)');
+      await reconcileLoops();
+      log.info({ ...ingest, ...triage }, 'sync complete (ingest + triage + loops)');
       break;
     }
     case 'synthesize':
-      log.info('synthesize: nightly Opus Tomorrow Plan is implemented in Phase 2');
+      log.info(await runSynthesis(), 'synthesis complete');
       break;
     case 'help':
     default:
-      log.info('CORTEX workers — commands: ingest | triage | sync | synthesize');
+      log.info('CORTEX workers — commands: ingest | triage | loops | sync | synthesize');
       break;
   }
   await closeDb();
