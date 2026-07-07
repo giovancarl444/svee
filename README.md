@@ -150,6 +150,8 @@ src/twin/
 | `npm run twin:run -- --input f.json --inbox g.json` | The daily loop: intake → score → tailor → stage → track → route → report |
 | `npm run twin:run -- --fetch` | Also auto-pull from watched Greenhouse/Lever boards (public JSON; set tokens in the KB `sources`) |
 | `npm run twin:channels` | Print the channel-readiness matrix (ATS · Gmail · Outlook · LinkedIn · WhatsApp) and what Sphere executes per channel |
+| `npm run twin:doctor` | Readiness check — what's ready and what's blocking "reaching out for real" (KB · DB · channels · Sphere) |
+| `npm run twin:execute` | The executor entrypoint — reads approved rows, builds ExecutionPlans, hands off to the wired Sphere (inert by default) |
 
 `twin:run` emits one JSON `TwinRunOutput` on stdout and a human summary on
 stderr. Default is **stage-only** (`TWIN_LIVE=0`): it stages everything and

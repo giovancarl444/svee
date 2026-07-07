@@ -17,8 +17,11 @@ import {
   countSubmittedSince,
   dueFollowups,
   pendingApprovals,
+  approvedApprovals,
+  markApprovalExecuted,
   latestDigest,
 } from "./store.js";
+import { planFromApproval, StagingSphere } from "./sphere.js";
 import type { ApprovalRequest, Digest, PipelineWrite } from "./contracts.js";
 
 function normParams(values: unknown[]): unknown[] {
@@ -117,6 +120,32 @@ describe("approvals + digest", () => {
     const row = pending.find((r) => (r as { id: string }).id === "ap-9") as { status: string; payload: { cover_letter: string } };
     expect(row.status).toBe("pending");
     expect(row.payload.cover_letter).toBe("letter");
+  });
+
+  it("the executor path: approved rows → plan → Sphere handoff (never sends)", async () => {
+    // Approve ap-9 (persisted above as pending).
+    await db.query(`UPDATE twin_approvals SET status = 'approved' WHERE id = 'ap-9'`);
+    const approved = await approvedApprovals(db);
+    expect(approved.some((r) => (r as { id: string }).id === "ap-9")).toBe(true);
+
+    const row = approved.find((r) => (r as { id: string }).id === "ap-9") as {
+      id: string; type: ApprovalRequest["type"]; company: string; role: string; url: string;
+      channel: string; cv_variant: string | null; action_on_approve: string; fit_score: number;
+      payload: { cover_letter: string; screening_answers: Array<{ q: string; a: string }>; missing_fields: string[] };
+    };
+    const plan = planFromApproval({
+      id: row.id, type: row.type, company: row.company, role: row.role, url: row.url,
+      channel: row.channel, cv_variant: row.cv_variant, cover_letter: row.payload.cover_letter,
+      screening_answers: row.payload.screening_answers, missing_fields: row.payload.missing_fields,
+      fit_score: row.fit_score, action_on_approve: row.action_on_approve,
+    });
+    const res = await new StagingSphere().execute(plan, { approved: true, live: true });
+    expect(res.performed).toBe(false); // inert — the twin never sends
+    expect(res.note).toMatch(/hand off to Sphere/i);
+
+    await markApprovalExecuted(db, "ap-9");
+    const stillApproved = await approvedApprovals(db);
+    expect(stillApproved.some((r) => (r as { id: string }).id === "ap-9")).toBe(false);
   });
 
   it("persists the digest and reads the latest run timestamp", async () => {

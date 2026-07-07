@@ -111,6 +111,11 @@ npm run twin:run -- --fetch          # also auto-pull from watched Greenhouse/Le
 `twin:run` emits the JSON contract on stdout and a human summary on stderr, and
 (with a DB) persists everything and dedupes against live applications.
 
+Check readiness at any time with `npm run twin:doctor` — it reports what's ready
+and the exact blockers to reaching out for real (fill the KB, configure a DB, wire
+Sphere). The executor entrypoint is `npm run twin:execute` (reads approved rows →
+`ExecutionPlan` → the wired `SphereExecutor`; inert `StagingSphere` by default).
+
 ## 6. Fill these KB slots before going live (§ First-Run Checklist)
 
 The bundled KB (`src/twin/kb.data.ts`) intentionally leaves genuinely-unknown

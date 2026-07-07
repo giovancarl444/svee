@@ -36,6 +36,9 @@ export type {
 export { StagingSphere, planFromApproval } from "./sphere.js";
 export type { SphereExecutor, ExecutionPlan, SphereContext, ExecutionResult } from "./sphere.js";
 
+export { buildReadiness } from "./readiness.js";
+export type { ReadinessReport, ReadinessSection, ReadinessInput } from "./readiness.js";
+
 export {
   HARD_STOP_ACTIONS,
   AUTONOMOUS_SAFE,
@@ -100,5 +103,7 @@ export {
   countSubmittedSince,
   dueFollowups,
   pendingApprovals,
+  approvedApprovals,
+  markApprovalExecuted,
   latestDigest,
 } from "./store.js";

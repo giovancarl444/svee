@@ -183,6 +183,20 @@ export async function pendingApprovals(db: Database): Promise<Row[]> {
   return db.query(`SELECT * FROM twin_approvals WHERE status = 'pending' ORDER BY fit_score DESC NULLS LAST`);
 }
 
+/** Approved-but-not-yet-executed rows — what Sphere (the executor) consumes. */
+export async function approvedApprovals(db: Database): Promise<Row[]> {
+  return db.query(`SELECT * FROM twin_approvals WHERE status = 'approved' ORDER BY fit_score DESC NULLS LAST`);
+}
+
+/** Mark an approval executed (called after Sphere performs the action). */
+export async function markApprovalExecuted(db: Database, id: string): Promise<number> {
+  const res = await db.query(
+    `UPDATE twin_approvals SET status = 'executed', decided_at = now(), synced_at = now() WHERE id = $1`,
+    [id],
+  );
+  return res.length;
+}
+
 /** The most recent digest (for the Cortex view / API). */
 export async function latestDigest(db: Database): Promise<Row | null> {
   const rows = await db.query(`SELECT * FROM twin_digests ORDER BY run_at DESC LIMIT 1`);
