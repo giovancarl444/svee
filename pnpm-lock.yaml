@@ -75,6 +75,9 @@ importers:
       '@cortex/ai':
         specifier: workspace:*
         version: link:../../packages/ai
+      '@cortex/calendar':
+        specifier: workspace:*
+        version: link:../../packages/calendar
       '@cortex/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -108,6 +111,18 @@ importers:
       '@cortex/db':
         specifier: workspace:*
         version: link:../db
+
+  packages/calendar:
+    dependencies:
+      '@cortex/config':
+        specifier: workspace:*
+        version: link:../config
+      '@cortex/core':
+        specifier: workspace:*
+        version: link:../core
+      googleapis:
+        specifier: 173.0.0
+        version: 173.0.0
 
   packages/config:
     dependencies:
@@ -3002,7 +3017,7 @@ snapshots:
     dependencies:
       base64-js: 1.5.1
       ecdsa-sig-formatter: 1.0.11
-      gaxios: 7.1.3
+      gaxios: 7.1.6
       gcp-metadata: 8.1.3
       google-logging-utils: 1.1.3
       gtoken: 8.0.0
@@ -3047,7 +3062,7 @@ snapshots:
 
   gtoken@8.0.0:
     dependencies:
-      gaxios: 7.1.3
+      gaxios: 7.1.6
       jws: 4.0.1
     transitivePeerDependencies:
       - supports-color

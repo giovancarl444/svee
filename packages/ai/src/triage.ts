@@ -14,7 +14,7 @@ export interface TriageResult {
   confidence: number;
 }
 
-const TRIAGE_SCHEMA: Anthropic.Tool.InputSchema = {
+export const CLASSIFICATION_SCHEMA: Anthropic.Tool.InputSchema = {
   type: 'object',
   additionalProperties: false,
   properties: {
@@ -60,7 +60,7 @@ export async function classifyTriage(
     model,
     system: SYSTEM,
     payload,
-    tool: { name: 'record_triage', description: 'Record the triage classification of one inbound item.', schema: TRIAGE_SCHEMA },
+    tool: { name: 'record_triage', description: 'Record the triage classification of one inbound item.', schema: CLASSIFICATION_SCHEMA },
     ...(relatedItemId ? { relatedItemId } : {}),
     maxTokens: 400,
   });

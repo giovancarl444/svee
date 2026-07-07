@@ -1,7 +1,18 @@
 import { buildSynthesisPayload, generateTomorrowPlan } from '@cortex/ai';
 import { getEnv } from '@cortex/config';
-import { getOpenLoopSummaries, getSynthesisActions, insertBrief, reconcileLoops } from '@cortex/db';
+import {
+  getOpenLoopSummaries,
+  getSynthesisActions,
+  getTomorrowEvents,
+  insertBrief,
+  reconcileLoops,
+} from '@cortex/db';
 import { log } from './logger';
+
+function eventEnd(raw: unknown): string | null {
+  const end = (raw as { end?: { dateTime?: string; date?: string } } | null)?.end;
+  return end?.dateTime ?? end?.date ?? null;
+}
 
 function ymd(d: Date, tz: string): string {
   try {
@@ -32,6 +43,8 @@ export async function runSynthesis(now: Date = new Date()): Promise<SynthesisSum
 
   const actions = await getSynthesisActions();
   const loops = await getOpenLoopSummaries();
+  // Upcoming events (roughly today + tomorrow) — the brief is written in the evening.
+  const events = await getTomorrowEvents(now, new Date(now.getTime() + 48 * 60 * 60 * 1000));
 
   const payload = buildSynthesisPayload({
     eveningDate: ymd(now, tz),
@@ -47,7 +60,11 @@ export async function runSynthesis(now: Date = new Date()): Promise<SynthesisSum
       description: l.description,
       due: l.dueAt ? l.dueAt.toISOString() : null,
     })),
-    events: [], // Google Calendar arrives in Phase 3
+    events: events.map((e) => ({
+      title: e.title,
+      start: e.start.toISOString(),
+      end: eventEnd(e.raw),
+    })),
   });
 
   const { text, model } = await generateTomorrowPlan(payload);

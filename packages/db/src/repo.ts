@@ -1,5 +1,6 @@
 import type { BriefKind, Category, NormalizedItem, SourceName } from '@cortex/core';
-import { and, desc, eq, sql, type SQL } from 'drizzle-orm';
+import type { EntityHandle } from '@cortex/core';
+import { and, desc, eq, gte, inArray, lt, ne, sql, type SQL } from 'drizzle-orm';
 import { getDb } from './client';
 import { briefs, classifications, entities, items, openLoops, threads } from './schema';
 
@@ -38,14 +39,19 @@ export async function findOrCreateThread(
   return again?.id ?? null;
 }
 
-/** Resolve a person by any channel handle, creating a minimal entity if unseen. */
+/**
+ * Resolve a person by any channel handle (email / phone / WA JID), creating a
+ * minimal entity if unseen. The jsonb `@>` containment match is what lets a
+ * later `mergeEntities` unify the same person across sources.
+ */
 export async function findOrCreateEntityByHandle(
   handle: string,
   displayName: string,
+  kind: EntityHandle['kind'] = 'email',
 ): Promise<string | null> {
   if (!handle) return null;
   const db = getDb();
-  const probe = JSON.stringify([{ kind: 'email', value: handle }]);
+  const probe = JSON.stringify([{ kind, value: handle }]);
   const [found] = await db
     .select({ id: entities.id })
     .from(entities)
@@ -54,9 +60,35 @@ export async function findOrCreateEntityByHandle(
   if (found) return found.id;
   const [ins] = await db
     .insert(entities)
-    .values({ displayName: displayName || handle, handles: [{ kind: 'email', value: handle }] })
+    .values({ displayName: displayName || handle, handles: [{ kind, value: handle }] })
     .returning({ id: entities.id });
   return ins?.id ?? null;
+}
+
+/** Unify two entities (e.g. the same person across email + WhatsApp). Operator-driven. */
+export async function mergeEntities(keepId: string, mergeId: string): Promise<void> {
+  if (keepId === mergeId) return;
+  const db = getDb();
+  const [keep] = await db.select().from(entities).where(eq(entities.id, keepId)).limit(1);
+  const [merge] = await db.select().from(entities).where(eq(entities.id, mergeId)).limit(1);
+  if (!keep || !merge) return;
+
+  const seen = new Set<string>();
+  const union: EntityHandle[] = [];
+  for (const h of [...keep.handles, ...merge.handles]) {
+    const key = `${h.kind}:${h.value}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      union.push(h);
+    }
+  }
+
+  await db.update(items).set({ senderIdentity: keepId }).where(eq(items.senderIdentity, mergeId));
+  await db
+    .update(entities)
+    .set({ handles: union, importance: Math.max(keep.importance, merge.importance), updatedAt: new Date() })
+    .where(eq(entities.id, keepId));
+  await db.delete(entities).where(eq(entities.id, mergeId));
 }
 
 export interface UpsertResult {
@@ -356,4 +388,116 @@ export async function insertBrief(b: {
     })
     .returning({ id: briefs.id });
   return row!.id;
+}
+
+// --- Tier-2 escalation candidates (spec §8) ----------------------------------
+export interface EscalationCandidate {
+  id: string;
+  source: string;
+  subject: string | null;
+  snippet: string | null;
+  senderName: string | null;
+  senderImportance: number;
+  threadId: string | null;
+  entityNotes: string | null;
+  timestamp: Date;
+}
+
+/**
+ * Items whose LATEST pass is low-confidence or touches money/deadline, and which
+ * have not yet been re-classified by the escalate-tier model. Snippets are
+ * decrypted via a second query-builder select (raw SQL can't decrypt).
+ */
+export async function getEscalationCandidates(
+  escalateModel: string,
+  limit = 50,
+): Promise<EscalationCandidate[]> {
+  const db = getDb();
+  const res = await db.execute(sql`
+    with latest as (
+      select distinct on (c.item_id) c.item_id, c.confidence, c.category, c.deadline_at
+      from classifications c order by c.item_id, c.created_at desc
+    )
+    select i.id, i.source, i.subject, i.thread_id,
+           e.display_name as sender_name, e.importance as sender_importance,
+           e.notes as entity_notes, i.timestamp
+    from items i
+    join latest l on l.item_id = i.id
+    left join entities e on e.id = i.sender_identity
+    where (l.confidence < 0.6 or l.category = 'financial' or l.deadline_at is not null)
+      and not exists (
+        select 1 from classifications c2 where c2.item_id = i.id and c2.model = ${escalateModel}
+      )
+    order by i.timestamp desc
+    limit ${limit}
+  `);
+
+  const metas = res.rows as Array<Record<string, unknown>>;
+  if (metas.length === 0) return [];
+
+  const ids = metas.map((m) => String(m.id));
+  const snippetRows = await db
+    .select({ id: items.id, snippet: items.bodySnippet })
+    .from(items)
+    .where(inArray(items.id, ids));
+  const snippetById = new Map(snippetRows.map((r) => [r.id, r.snippet]));
+
+  return metas.map((m) => ({
+    id: String(m.id),
+    source: String(m.source),
+    subject: (m.subject as string | null) ?? null,
+    snippet: snippetById.get(String(m.id)) ?? null,
+    senderName: (m.sender_name as string | null) ?? null,
+    senderImportance: m.sender_importance != null ? Number(m.sender_importance) : 1,
+    threadId: (m.thread_id as string | null) ?? null,
+    entityNotes: (m.entity_notes as string | null) ?? null,
+    timestamp: m.timestamp instanceof Date ? m.timestamp : new Date(String(m.timestamp)),
+  }));
+}
+
+/** A few earlier (decrypted) snippets from the same thread, for escalation context. */
+export async function getThreadSnippets(
+  threadId: string | null,
+  excludeItemId: string,
+  limit = 5,
+): Promise<string[]> {
+  if (!threadId) return [];
+  const rows = await getDb()
+    .select({ snippet: items.bodySnippet })
+    .from(items)
+    .where(and(eq(items.threadId, threadId), ne(items.id, excludeItemId)))
+    .orderBy(desc(items.timestamp))
+    .limit(limit);
+  return rows.map((r) => r.snippet).filter((s): s is string => Boolean(s));
+}
+
+// --- Calendar events for the brief (spec §8) ---------------------------------
+export interface CalendarEventRow {
+  title: string;
+  start: Date;
+  raw: unknown;
+}
+
+/** Calendar items whose start falls in [from, to) — fed to the nightly synthesis. */
+export async function getTomorrowEvents(from: Date, to: Date): Promise<CalendarEventRow[]> {
+  const rows = await getDb()
+    .select({ title: items.subject, start: items.timestamp, raw: items.raw })
+    .from(items)
+    .where(and(eq(items.source, 'calendar'), gte(items.timestamp, from), lt(items.timestamp, to)))
+    .orderBy(items.timestamp);
+  return rows.map((r) => ({ title: r.title ?? '(event)', start: r.start, raw: r.raw }));
+}
+
+/** Cheap 'scheduling' classification for calendar events — no model call. */
+export async function classifySchedulingHeuristic(itemId: string): Promise<void> {
+  await getDb().insert(classifications).values({
+    itemId,
+    model: 'heuristic',
+    category: 'scheduling',
+    urgency: 1,
+    requiresAction: false,
+    actionSummary: '',
+    confidence: 1,
+    reasoning: 'calendar event',
+  });
 }

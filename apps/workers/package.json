@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@cortex/ai": "workspace:*",
+    "@cortex/calendar": "workspace:*",
     "@cortex/config": "workspace:*",
     "@cortex/core": "workspace:*",
     "@cortex/db": "workspace:*",

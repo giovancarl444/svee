@@ -5,6 +5,7 @@ import { loadLocalEnv } from '@cortex/config';
 loadLocalEnv();
 
 import { closeDb, reconcileLoops } from '@cortex/db';
+import { runEscalation } from './escalate';
 import { runIngest } from './ingest';
 import { log } from './logger';
 import { runSynthesis } from './synthesize';
@@ -20,6 +21,9 @@ async function main(): Promise<void> {
     case 'triage':
       log.info(await runTriage(), 'triage complete');
       break;
+    case 'escalate':
+      log.info(await runEscalation(), 'escalation complete');
+      break;
     case 'loops':
       await reconcileLoops();
       log.info('loops reconciled');
@@ -27,8 +31,9 @@ async function main(): Promise<void> {
     case 'sync': {
       const ingest = await runIngest();
       const triage = await runTriage();
+      const escalation = await runEscalation();
       await reconcileLoops();
-      log.info({ ...ingest, ...triage }, 'sync complete (ingest + triage + loops)');
+      log.info({ ...ingest, ...triage, ...escalation }, 'sync complete (ingest + triage + escalate + loops)');
       break;
     }
     case 'synthesize':
@@ -36,7 +41,7 @@ async function main(): Promise<void> {
       break;
     case 'help':
     default:
-      log.info('CORTEX workers — commands: ingest | triage | loops | sync | synthesize');
+      log.info('CORTEX workers — commands: ingest | triage | escalate | loops | sync | synthesize');
       break;
   }
   await closeDb();

@@ -5,8 +5,11 @@ export { dbCheckpointStore, recordConnectorSync, setConnectorEnabled } from './c
 export {
   upsertItem,
   classifyBulkHeuristic,
+  classifySchedulingHeuristic,
   findOrCreateThread,
   findOrCreateEntityByHandle,
+  mergeEntities,
+  getTomorrowEvents,
   getItemsNeedingTriage,
   insertClassification,
   PRIORITY_ROLLUP_SQL,
@@ -16,6 +19,8 @@ export {
   CLOSE_LOOPS_SQL,
   getSynthesisActions,
   getOpenLoopSummaries,
+  getEscalationCandidates,
+  getThreadSnippets,
   insertBrief,
   type UpsertResult,
   type TriageCandidate,
@@ -23,4 +28,6 @@ export {
   type PriorityRow,
   type SynthesisActionRow,
   type OpenLoopSummary,
+  type EscalationCandidate,
+  type CalendarEventRow,
 } from './repo';

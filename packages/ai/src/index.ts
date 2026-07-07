@@ -15,5 +15,6 @@ export {
 } from './redaction';
 export { writeApiCall, type ApiCallRecord } from './audit';
 export { structuredCall, textCall, type StructuredCall, type StructuredResult, type TextCall } from './client';
-export { classifyTriage, shouldEscalate, type TriageResult } from './triage';
+export { classifyTriage, shouldEscalate, CLASSIFICATION_SCHEMA, type TriageResult } from './triage';
+export { classifyEscalate } from './escalate';
 export { generateTomorrowPlan } from './synthesis';

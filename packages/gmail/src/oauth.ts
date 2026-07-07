@@ -21,12 +21,12 @@ export function makeOAuthClient(): OAuth2Client {
   return new google.auth.OAuth2(env.GMAIL_CLIENT_ID, env.GMAIL_CLIENT_SECRET, env.GMAIL_REDIRECT_URI);
 }
 
-/** URL the operator visits once to grant read access. */
-export function authUrl(client: OAuth2Client): string {
+/** URL the operator visits once to grant read access (scopes default to Gmail). */
+export function authUrl(client: OAuth2Client, scopes: string[] = GMAIL_SCOPES): string {
   return client.generateAuthUrl({
     access_type: 'offline', // returns a refresh_token
     prompt: 'consent', // force refresh_token even on re-consent
-    scope: GMAIL_SCOPES,
+    scope: scopes,
   });
 }
 

@@ -1,4 +1,9 @@
-import { classifyBulkHeuristic, recordConnectorSync, upsertItem } from '@cortex/db';
+import {
+  classifyBulkHeuristic,
+  classifySchedulingHeuristic,
+  recordConnectorSync,
+  upsertItem,
+} from '@cortex/db';
 import { wireAdapters } from './adapters';
 import { log } from './logger';
 import { adapters } from './registry';
@@ -36,6 +41,9 @@ export async function runIngest(): Promise<IngestSummary> {
         if (normalized.bulk) {
           await classifyBulkHeuristic(itemId);
           summary.bulk++;
+        } else if (normalized.source === 'calendar') {
+          // Calendar events don't need Haiku — classify as scheduling directly.
+          await classifySchedulingHeuristic(itemId);
         }
       }
 
