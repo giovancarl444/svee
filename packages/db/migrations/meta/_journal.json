@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1783414048467,
+      "tag": "0000_abandoned_gamma_corps",
+      "breakpoints": true
+    }
+  ]
+}

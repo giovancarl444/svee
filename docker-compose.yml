@@ -1,0 +1,85 @@
+# =============================================================================
+# CORTEX — all-in-one, self-hosted stack (Constraint §1). Everything runs on the
+# operator's box. Ports bind to 127.0.0.1 ONLY: reach the dashboard over Tailscale
+# or a reverse proxy, never by opening a public port (Constraint §10).
+#
+#   cp .env.example .env   # fill in secrets
+#   docker compose up      # Phase 0: db + migrate + dashboard
+#
+# The `workers` service is Phase 1+ and gated behind a profile:
+#   docker compose --profile workers up
+# =============================================================================
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cortex}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cortex}
+      POSTGRES_DB: ${POSTGRES_DB:-cortex}
+    volumes:
+      # NOTE (Constraint §5): put this volume on an encrypted disk (LUKS / dm-crypt)
+      # for disk-level encryption. Message bodies are ALSO encrypted at the column
+      # level, so a stolen disk without CORTEX_ENCRYPTION_KEY yields no plaintext.
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - '127.0.0.1:5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-cortex} -d ${POSTGRES_DB:-cortex}']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.workers
+    command: ['pnpm', 'db:migrate']
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-cortex}:${POSTGRES_PASSWORD:-cortex}@db:5432/${POSTGRES_DB:-cortex}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: 'no'
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://${POSTGRES_USER:-cortex}:${POSTGRES_PASSWORD:-cortex}@db:5432/${POSTGRES_DB:-cortex}
+      CORTEX_TZ: ${CORTEX_TZ:-UTC}
+      CORTEX_AUTH_SECRET: ${CORTEX_AUTH_SECRET:-}
+      CORTEX_ENCRYPTION_KEY: ${CORTEX_ENCRYPTION_KEY:-}
+    ports:
+      - '127.0.0.1:3000:3000'
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # Phase 1+: ingestion + intelligence workers. Not started by default.
+  workers:
+    build:
+      context: .
+      dockerfile: Dockerfile.workers
+    profiles: ['workers']
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://${POSTGRES_USER:-cortex}:${POSTGRES_PASSWORD:-cortex}@db:5432/${POSTGRES_DB:-cortex}
+      CORTEX_TZ: ${CORTEX_TZ:-UTC}
+      CORTEX_ENCRYPTION_KEY: ${CORTEX_ENCRYPTION_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  pgdata:

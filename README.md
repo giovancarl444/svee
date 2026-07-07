@@ -1,117 +1,115 @@
-# impact.com integration
+# CORTEX
 
-A production-grade, typed, resilient integration layer for the
-[impact.com](https://impact.com) affiliate/partnership platform — a versioned
-client + data pipeline + dashboard, built to extend for months, not a one-off
-script.
+A single-operator **personal brain**. It ingests every inbound channel (email,
+WhatsApp, calendar, more later) into one normalized store, uses Claude to triage
+the noise, surfaces only what actually needs a human, extracts commitments and
+deadlines, and writes a blunt "what to do tomorrow" brief each evening.
 
-> **Status:** the library and pipeline are complete and unit-tested (78 tests,
-> mocked HTTP). The *live* steps (persona detection, smoke test, real syncs) are
-> wired but not yet run — this scaffold was built without credentials and without
-> network egress to impact.com. See **[docs/INTEGRATION_NOTES.md](docs/INTEGRATION_NOTES.md)**
-> for the exact runbook and the list of ⚠️ items to verify against live docs.
+Private, single-user, **self-hosted-first**. Not a SaaS. Optimized for the
+operator's leverage and privacy — not scale.
+
+> **Status — Phase 0 (Skeleton) complete.** Monorepo, the full datastore schema,
+> design tokens + vendored fonts, and all five dashboard views run end-to-end
+> against Postgres. It ingests nothing yet — that's Phase 1. See
+> [build phases](#build-phases).
+
+---
+
+## The non-negotiables (why it's built this way)
+
+1. **Local-first.** The datastore and all workers run on infrastructure the
+   operator controls. No third party ever reads raw message content — except the
+   Claude API, whose exposure is explicit, minimized, and audited.
+2. **Data minimization to the model.** Only the fields a given call needs leave
+   the box (subject + sender + snippet, never full chains). The
+   [redaction/allowlist layer](packages/ai/src/redaction.ts) is the only way a
+   payload is built, and it is logged verbatim to `api_calls`.
+3. **Secrets are server-side only.** Never in the repo, never in the browser
+   bundle. See [`.env.example`](.env.example).
+4. **The only outbound calls** are the source APIs, the WhatsApp module, and the
+   Anthropic API. No analytics, no telemetry, no CDN. **Fonts are vendored**
+   ([Geist + Instrument Serif](apps/dashboard/app/fonts)).
+5. **Encryption at rest.** Message bodies are AES-256-GCM encrypted at the column
+   level ([`crypto.ts`](packages/db/src/crypto.ts)); the key lives outside the DB.
+6. **Read-only in V1.** CORTEX observes and advises. It sends nothing on the
+   operator's behalf. Acting-on-your-behalf is a later, explicitly-gated phase.
+7. **Mobile-first.** The dashboard is built for ~380px first, desktop second.
+
+## Stack & the decisions made
+
+- **TypeScript** everywhere, a **pnpm** monorepo.
+- **Dashboard:** Next.js 15 (App Router, Server Components, Server Actions).
+- **Datastore: Postgres + Drizzle** (chosen over self-hosted Supabase). For one
+  operator, Drizzle is leaner — a single DB container, type-safe migrations, and
+  full control over exactly what leaves the box, with far less surface to audit
+  against the no-egress / supply-chain rules. Dashboard auth is handled by the app
+  behind a VPN/reverse proxy rather than a bundled multi-tenant auth stack.
+- **AI:** Anthropic API, routed by cost — Haiku (triage) → Sonnet (escalation) →
+  Opus (nightly synthesis). Haiku is the default; you earn your way up to Opus.
+- **Hosting:** all-in-one **Docker Compose** on an operator-owned always-up host,
+  reached over **Tailscale** (never a public port). A VPS makes Gmail Pub/Sub
+  push viable; incremental polling is the robust default.
+
+Integrations are grounded in **current official docs**, captured at build time in
+[`docs/live-docs/`](docs/live-docs/) — not implemented from memory.
+
+## Repository layout
+
+```
+apps/
+  dashboard/   Next.js 15 — the 5 views, design tokens, vendored fonts
+  workers/     ingestion + intelligence runners (tsx, standalone)
+packages/
+  config/      zod-validated, server-only env
+  core/        SourceAdapter interface + normalized types (the enum vocabulary)
+  db/          Drizzle schema (the spine), migrations, column encryption
+  ai/          model routing · redaction/allowlist · api_calls audit · Claude wrapper
+docs/
+  ARCHITECTURE.md · SECURITY.md · live-docs/ (the integration ledger)
+```
 
 ## Quick start
 
-```bash
-cp .env.local.example .env.local        # then paste SID + token (lines 14–15)
-npm install
-npm run persona                         # auto-detect brand/partner/agency
-npm run smoke                           # authed GET + report/partners/actions counts
-```
-
-Nothing sensitive is committed: `.env.local` is gitignored.
-
-## What's in the box
-
-```
-src/
-  client/      http (retry/backoff/jitter/Retry-After) · pagination · deferred jobs
-               · persona detect · config · logger (redacting) · façade
-  resources/   reports · actions · clicks · partners/programs · catalogs
-               · media-properties · deals (partner) · conversions
-               · tracking-links · unique-urls · promo-codes
-  sync/        schema.sql · idempotent upserts · watermarks · backfill · retention
-               · persona-aware dashboard metrics (SubId / program breakdowns)
-  webhooks/    postback receiver (signature verify · dedupe · upsert) + Node/Next
-  automation/  reconciliation (API vs DB drift) · alerting (EPC drop / reversals)
-  scripts/     persona · smoke · sync · backfill · snapshot · reconcile · alerts
-dashboard/     mobile-first static dashboard (reads a metrics snapshot)
-docs/          INTEGRATION_NOTES.md (the memory) · EXTENDING.md
-```
-
-## Commands
-
-| Command | What it does |
-|---|---|
-| `npm run persona` | Auto-detect persona by probing Campaigns under each base path |
-| `npm run smoke` | Phase-1 acceptance: auth + report + partners + actions |
-| `npm run sync` | Incremental pull → idempotent upsert into the warehouse |
-| `npm run backfill -- --days 90` | Historical load of actions + clicks |
-| `npm run snapshot` | Compute dashboard metrics → `dashboard/public/metrics.json` |
-| `npm run reconcile` | Nightly API-vs-DB drift check (exit 1 on drift) |
-| `npm run alerts` | EPC-drop / reversal-spike partner alerts |
-| `npm run webhook` | Run the postback receiver locally |
-| `npm run gen:types` | Generate typed models from the OpenAPI spec |
-| `npm test` / `npm run typecheck` | Unit tests (mocked HTTP) / typecheck |
-
-## Design principles (the non-negotiables)
-
-- **Never hardcode secrets** — `.env.local` only, redacted in logs (last-4).
-- **Never guess an endpoint/field/version** — everything unverified against live
-  docs is flagged `⚠️ VERIFY` and centralised so a fix is one edit. See the
-  verification ledger in `docs/INTEGRATION_NOTES.md` §4.
-- **Resilient by default** — every call retries 429/5xx/network with jittered
-  backoff and respects `Retry-After`.
-- **Deferred-aware** — large reports/exports go through submit → poll → download.
-- **Idempotent writes** — conversions dedupe on our `OrderId`; DB upserts on
-  natural keys; postbacks dedupe on event id. Retries never double-count.
-- **Dry-run first** — writes log the exact request; `--live` (or `IMPACT_LIVE=1`)
-  is required to actually fire.
-- **GDPR-aware** — emails hashed at the edge, no raw PII in logs/repo, retention
-  TTL on synced tables.
-
-## Dashboard
-
-`npm run sync && npm run snapshot`, then **serve** the folder (browsers block
-`fetch()` on `file://`, so don't just double-click the file):
+### All-in-one (the intended deployment)
 
 ```bash
-npx serve dashboard/public      # or: python3 -m http.server --directory dashboard/public
+cp .env.example .env          # fill in secrets (see below)
+docker compose up             # db + migrate + dashboard  →  http://127.0.0.1:3000
 ```
 
-Mobile-first and persona-aware; renders an 8-tile KPI grid (approved revenue,
-pending value, EPC, conversion rate, clicks, actions, payout, reversal rate), an
-action-state funnel, a daily revenue+clicks trend, **SubId1 tracking** (the
-Shopify store/placement dimension), top programs, media properties, deals, and
-top catalog items ([preview](docs/dashboard-preview.png)). Deploy the folder to
-Vercel or any static host. The house-stack Next.js route version is documented inline in
-`src/webhooks/next-route.ts` and `docs/EXTENDING.md`.
+Ports bind to `127.0.0.1` only. Reach the dashboard from your phone over Tailscale
+or a reverse proxy — never open a public port (Constraint §10).
 
-## Deploy (always-up, no PC required)
+Minimum to boot Phase 0: `POSTGRES_*` (defaults work) and a
+`CORTEX_ENCRYPTION_KEY` (`openssl rand -base64 32`). `ANTHROPIC_API_KEY` and the
+connector credentials come online in Phase 1+.
 
-Recommended topology:
+### Local development
 
-- **Supabase** — the Postgres warehouse. Apply the schema once: `npm run migrate`
-  (also auto-applied on the first `npm run sync`). Use the **transaction pooler**
-  connection string for serverless.
-- **GitHub Actions** — the scheduler. `.github/workflows/sync.yml` runs
-  `sync → snapshot → reconcile` nightly (and on demand via *Run workflow*). Add
-  repo **secrets** `IMPACT_ACCOUNT_SID`, `IMPACT_AUTH_TOKEN`, `DATABASE_URL` and
-  **variables** `IMPACT_PERSONA=partner`, `DB=supabase`.
-- **Vercel** — hosts the dashboard + live API. `vercel.json` builds the library
-  and serves `dashboard/public` statically with two functions:
-  - `GET /api/metrics` — live `DashboardMetrics` from the warehouse (the
-    dashboard fetches this, falling back to the static snapshot).
-  - `GET/POST /api/postback` — the webhook receiver.
-  Set the same env vars in Vercel (DB, DATABASE_URL, IMPACT_*, and
-  `WEBHOOK_SIGNING_SECRET` for postbacks). Point impact.com postbacks at
-  `https://<app>/api/postback?token=<WEBHOOK_SIGNING_SECRET>`.
+```bash
+pnpm install
+pnpm db:generate              # regenerate SQL migrations from the schema
+pnpm db:migrate               # apply them (needs DATABASE_URL)
+pnpm dev                      # dashboard at http://localhost:3000
+pnpm typecheck && pnpm test   # full workspace check
+```
 
-Once secrets are in, trigger the Actions workflow to populate the DB and the
-Vercel dashboard shows live numbers.
+## Build phases
 
-## Adding an endpoint
+| Phase | Scope | State |
+| --- | --- | --- |
+| **0 — Skeleton** | Monorepo, full schema + migrations, design tokens, 5 views wired to (empty) data | ✅ **done** |
+| 1 — Gmail e2e | Gmail (+IMAP) adapter → normalize → Haiku triage → Priority view | next |
+| 2 — The brief | Open-loop tracking + nightly Opus Tomorrow Plan | — |
+| 3 — Breadth | IMAP + Calendar, entity unification, Sonnet escalation | — |
+| 4 — WhatsApp | Isolated, read-only, dependency-pinned module | — |
+| 5 — Polish | Bulk heuristics, importance learning, notifications, audit panel | — |
 
-See **[docs/EXTENDING.md](docs/EXTENDING.md)** — a resource module + one wire-up
-line + a mocked test, typically under 10 minutes.
+## What "Phase 0 done" means here
+
+Verified end-to-end against a live Postgres 16: migrations apply, all five views
+serve (200), seeded data renders (an urgency-3 action item with its Signal
+marker, the Connectors health + the "what left the box" audit row), and empty
+states render where there's nothing yet. `pnpm typecheck` and `pnpm test` are
+green. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and
+[`docs/SECURITY.md`](docs/SECURITY.md).

@@ -1,0 +1,67 @@
+@import 'tailwindcss';
+
+/* =============================================================================
+   CORTEX design tokens — "Industrial Studio" (spec §9). The single source of
+   truth: the five locked colours, the type families, and the spacing/scale.
+   Signal (#FF3B14) is reserved for genuine urgency (urgency-3, overdue) — never
+   decorative.
+   ========================================================================== */
+@theme {
+  --color-bone: #f4f1ea;
+  --color-bone-shadow: #e4dfd3;
+  --color-ink: #0e0e0c;
+  --color-signal: #ff3b14;
+  --color-steel: #9da0a4;
+
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, 'SFMono-Regular', monospace;
+  --font-serif: var(--font-instrument-serif), Georgia, 'Times New Roman', serif;
+
+  /* A calm, dense scale. */
+  --text-2xs: 0.6875rem; /* 11px — mono metadata */
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  background: var(--color-bone);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-bone);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Hairlines and mono labels — the instrument-panel vocabulary. */
+.hairline {
+  border-top: 1px solid color-mix(in srgb, var(--color-ink) 12%, transparent);
+}
+
+.tab-index,
+.meta {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-steel);
+}
+
+/* Instrument Serif is only ever used italic, as an editorial accent. */
+.editorial {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+}
+
+::selection {
+  background: var(--color-signal);
+  color: var(--color-bone);
+}

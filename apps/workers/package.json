@@ -1,0 +1,20 @@
+{
+  "name": "@cortex/workers",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "ingest": "tsx src/index.ts ingest",
+    "triage": "tsx src/index.ts triage",
+    "synthesize": "tsx src/index.ts synthesize"
+  },
+  "dependencies": {
+    "@cortex/ai": "workspace:*",
+    "@cortex/config": "workspace:*",
+    "@cortex/core": "workspace:*",
+    "@cortex/db": "workspace:*",
+    "drizzle-orm": "0.45.2",
+    "pino": "10.3.1"
+  }
+}
