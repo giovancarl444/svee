@@ -1,6 +1,5 @@
-import type { AttachmentMeta, NormalizedItem, Recipient } from '@cortex/core';
+import { isBulk, type AttachmentMeta, type NormalizedItem, type Recipient } from '@cortex/core';
 import type { gmail_v1 } from 'googleapis';
-import { isBulk } from './bulk';
 
 function headerMap(payload: gmail_v1.Schema$MessagePart | undefined): Map<string, string> {
   const m = new Map<string, string>();

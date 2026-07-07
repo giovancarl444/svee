@@ -8,11 +8,13 @@ deadlines, and writes a blunt "what to do tomorrow" brief each evening.
 Private, single-user, **self-hosted-first**. Not a SaaS. Optimized for the
 operator's leverage and privacy — not scale.
 
-> **Status — Phase 2 (the brief) complete.** On top of the Gmail spine: open-loop
-> tracking (opens when you owe a reply, auto-closes when you send it) and the
-> nightly **Opus Tomorrow Plan**, rendered in the Tomorrow view. Add Google OAuth
-> creds (`pnpm gmail:auth`) and an `ANTHROPIC_API_KEY` to run it on real mail.
-> See [build phases](#build-phases).
+> **Status — Phase 3 (breadth) complete.** Four sources now share one spine —
+> Gmail, IMAP, and Google Calendar adapters, all read-only — with Sonnet
+> escalation for low-confidence/high-stakes items and cross-channel entity
+> unification. Open-loop tracking and the nightly Opus Tomorrow Plan run on top.
+> Add creds (`pnpm gmail:auth`, IMAP env, `ANTHROPIC_API_KEY`) to run it on real
+> data. WhatsApp (Phase 4) awaits an explicit ban-risk decision. See
+> [build phases](#build-phases).
 
 ---
 
@@ -62,9 +64,12 @@ apps/
   workers/     ingestion + intelligence runners (tsx, standalone)
 packages/
   config/      zod-validated, server-only env
-  core/        SourceAdapter interface + normalized types (the enum vocabulary)
-  db/          Drizzle schema (the spine), migrations, column encryption
-  ai/          model routing · redaction/allowlist · api_calls audit · Claude wrapper
+  core/        SourceAdapter interface + normalized types + bulk heuristic
+  db/          Drizzle schema (the spine), migrations, column encryption, repo
+  ai/          model routing · redaction/allowlist · api_calls audit · Claude calls
+  gmail/       read-only Gmail adapter (OAuth, historyId sync)
+  imap/        read-only IMAP adapter (imapflow, UID sync)
+  calendar/    read-only Google Calendar adapter (syncToken)
 docs/
   ARCHITECTURE.md · SECURITY.md · live-docs/ (the integration ledger)
 ```
@@ -102,8 +107,8 @@ pnpm typecheck && pnpm test   # full workspace check
 | **0 — Skeleton** | Monorepo, full schema + migrations, design tokens, 5 views wired to (empty) data | ✅ **done** |
 | **1 — Gmail e2e** | Gmail adapter → normalize → encrypted items → bulk heuristic + Haiku triage → Priority view; operator login | ✅ **done** |
 | **2 — The brief** | Open-loop tracking + nightly Opus Tomorrow Plan + Tomorrow view | ✅ **done** |
-| 3 — Breadth | IMAP + Calendar, entity unification, Sonnet escalation | next |
-| 4 — WhatsApp | Isolated, read-only, dependency-pinned module | — |
+| **3 — Breadth** | IMAP + Calendar adapters, entity unification, Tier-2 Sonnet escalation | ✅ **done** |
+| 4 — WhatsApp | Isolated, read-only, dependency-pinned module | needs your decision |
 | 5 — Polish | Bulk heuristics, importance learning, notifications, audit panel | — |
 
 ## What "Phase 0 done" means here

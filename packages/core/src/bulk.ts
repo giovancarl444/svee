@@ -1,7 +1,7 @@
 /**
  * Cheap header heuristics to detect bulk/automated mail BEFORE spending a model
  * call (spec §6: "Don't pay Haiku to tell you a newsletter is a newsletter").
- * Operates on a lowercased header map.
+ * Shared by every email adapter (Gmail, IMAP). Operates on a lowercased header map.
  */
 export function isBulk(headers: Map<string, string>): boolean {
   // The single strongest signal: a one-click unsubscribe header.

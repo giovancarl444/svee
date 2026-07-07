@@ -2,6 +2,7 @@ import { getEnv } from '@cortex/config';
 import { CalendarAdapter, authedCalendarClient, makeCalendarApi } from '@cortex/calendar';
 import { dbCheckpointStore } from '@cortex/db';
 import { GmailAdapter, authedClient, makeGmailApi } from '@cortex/gmail';
+import { ImapAdapter, makeImapFetcher } from '@cortex/imap';
 import { log } from './logger';
 import { registerAdapter } from './registry';
 
@@ -26,5 +27,16 @@ export function wireAdapters(): void {
     log.info({ calendarId: env.GOOGLE_CALENDAR_ID }, 'adapters: calendar registered');
   } else {
     log.warn('adapters: google not configured (GMAIL_CLIENT_ID/SECRET/REDIRECT_URI/REFRESH_TOKEN) — skipping gmail + calendar');
+  }
+
+  if (env.IMAP_HOST && env.IMAP_USER && env.IMAP_PASSWORD) {
+    const fetcher = makeImapFetcher({
+      host: env.IMAP_HOST,
+      port: env.IMAP_PORT,
+      user: env.IMAP_USER,
+      pass: env.IMAP_PASSWORD,
+    });
+    registerAdapter(new ImapAdapter({ fetcher, store: dbCheckpointStore }));
+    log.info({ host: env.IMAP_HOST }, 'adapters: imap registered');
   }
 }

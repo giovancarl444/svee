@@ -20,6 +20,7 @@
     "@cortex/core": "workspace:*",
     "@cortex/db": "workspace:*",
     "@cortex/gmail": "workspace:*",
+    "@cortex/imap": "workspace:*",
     "drizzle-orm": "0.45.2",
     "pino": "10.3.1"
   }
