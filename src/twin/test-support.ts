@@ -26,7 +26,7 @@ export function fixtureKb(): KnowledgeBase {
 export function makeFacts(partial: Partial<RoleFacts> = {}): RoleFacts {
   return {
     company: "Acme",
-    role: "Full-stack Engineer",
+    role: "E-commerce Specialist",
     url: "https://boards.greenhouse.io/acme/jobs/1",
     source: "test",
     requiredSkills: ["TypeScript", "Next.js", "Supabase", "Postgres", "Vercel"],

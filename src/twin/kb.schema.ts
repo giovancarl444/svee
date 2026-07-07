@@ -119,6 +119,8 @@ export const KnowledgeBaseSchema = z.object({
   profile: ProfileSchema,
   narrative: z.string(),
   targetRoles: TargetRolesSchema,
+  /** Schools/programs (one line each). No university degree ⇒ leave empty of degrees. */
+  education: z.array(z.string()).default([]),
   experience: z.array(ExperienceEntrySchema).default([]),
   skills: SkillsSchema,
   /** The ONLY numbers the twin may cite. If a number isn't here, it doesn't exist. */

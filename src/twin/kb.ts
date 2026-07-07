@@ -45,6 +45,8 @@ const OPTIONAL_BLANK_PREFIXES = [
   "profile.pronouns",
   "preferences.hoursConstraints",
   "profile.militaryNote",
+  "profile.githubUrl", // optional for a non-engineering profile
+  "profile.personalSite",
   "sources.url",
   "sources.query",
 ];

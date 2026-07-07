@@ -110,8 +110,8 @@ describe("scoreRole — seniority realism", () => {
 
 describe("classifyFamily", () => {
   it("classifies primary / also / not / unknown", () => {
-    expect(classifyFamily(makeFacts({ role: "AI Agent Engineer" }), kb)).toBe("primary");
-    expect(classifyFamily(makeFacts({ role: "Backend Engineer" }), kb)).toBe("also");
+    expect(classifyFamily(makeFacts({ role: "Growth Engineer" }), kb)).toBe("primary");
+    expect(classifyFamily(makeFacts({ role: "Web Developer" }), kb)).toBe("also");
     expect(classifyFamily(makeFacts({ role: "Manual QA Tester" }), kb)).toBe("not");
     expect(classifyFamily(makeFacts({ role: "Underwater Basket Weaver" }), kb)).toBe("unknown");
   });

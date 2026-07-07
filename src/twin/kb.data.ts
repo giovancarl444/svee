@@ -1,211 +1,284 @@
 /**
- * The bundled Knowledge Base for Svee.
+ * The bundled Knowledge Base for Elliot Svee — populated from his real CV
+ * (Elliot_CV_Engelska.pdf) plus the one technical project verifiable in this
+ * repository (the impact.com affiliate integration).
  *
- * TRUTH DISCIPLINE: this file contains only what the spec states as fact plus
- * what is verifiable from this repository (e.g. the impact.com integration and
- * its 78-test suite). Genuinely-unknown personal data — contact email, phone,
- * profile URLs, salary numbers, notice period — is left as an explicit `<<slot>>`
- * so the loader flags it for a human instead of the twin inventing it. Project
- * `shipped` states are deliberately conservative: nothing is marked "live" unless
- * it is actually running in production. Interview-defensibility over polish.
+ * TRUTH DISCIPLINE: every claim here is stated on the CV or verifiable in-repo.
+ * The genuinely-unknown facts the CV doesn't give — LinkedIn URL, salary
+ * floor/target, notice period, start date — are left as explicit `<<slot>>`s so
+ * the loader flags them instead of the twin inventing them. `shipped` states are
+ * conservative. There is NO university degree (upper-secondary/gymnasium only),
+ * which the mandatory-credential hard filter relies on. Interview-defensibility
+ * over polish.
  *
- * Swap this out (or set TWIN_KB_PATH) once the real slots are confirmed.
+ * Positioning reflects the real person: an e-commerce / growth / CRO / digital-
+ * marketing operator with AI-tooling and web-development ability — not a pure
+ * software engineer.
  */
 import type { KnowledgeBase } from "./kb.schema.js";
 
 export const SVEE_KB: KnowledgeBase = {
-  version: "0.1.0",
+  version: "0.2.0",
 
   profile: {
-    fullName: "Ellit Svee",
-    preferredName: "Svee",
+    fullName: "Elliot Carl Svee",
+    preferredName: "Elliot",
     pronouns: "",
-    email: "<<applications email — confirm: ellit.svee@gmail.com?>>",
-    phone: "<<+46 phone number>>",
+    email: "elliot.svee@outlook.com",
+    phone: "+46 73 543 31 57",
     location: "Sollentuna, Stockholm, Sweden",
     workAuthorization: "Swedish/EU right to work — no visa or sponsorship required",
     linkedinUrl: "<<LinkedIn profile URL>>",
-    githubUrl: "<<GitHub / portfolio URL>>",
-    personalSite: "<<public-facing site — rox.com? confirm which is live>>",
-    availability: "<<notice / start date — immediate or 2 weeks?>>",
-    willingToRelocate: "Not relocating; hybrid in the Stockholm area is fine, otherwise remote",
+    githubUrl: "",
+    personalSite: "",
+    availability: "<<start date / notice — immediate?>>",
+    willingToRelocate: "Based in Sollentuna (Stockholm); open to hybrid in the Stockholm area, otherwise remote",
     relocateTo: ["Stockholm", "Sollentuna"],
-    workModePreference: "Remote-first (autonomous) > hybrid (Stockholm) > on-site",
-    driversLicense: "No (A1 motorcycle licence in progress, summer 2026)",
-    credentials: [], // No formal degree/clearance — drives the mandatory-credential hard filter.
-    militaryNote:
-      "Pending Jägarsoldat application at I 19 Arvidsjaur — may affect availability if it proceeds.",
-    discloseMilitary: false, // Internal-only; not volunteered on application forms.
+    workModePreference: "Remote-first > hybrid (Stockholm) > on-site",
+    driversLicense: "No",
+    credentials: [], // Upper-secondary (gymnasium) only — no university degree.
+    militaryNote: "",
+    discloseMilitary: false,
   },
 
   narrative:
-    "Solo full-stack operator who ships production-grade systems end to end — " +
-    "TypeScript/Next.js on Supabase/Postgres and Vercel, with AI-agent orchestration and " +
-    "crypto-native billing. I've built a typed, resilient affiliate-tracking integration " +
-    "(retrying HTTP client, idempotent warehouse, mobile-first dashboard) and autonomous " +
-    "lead-gen and job-application agents — without a team. I own the whole stack, move fast, " +
-    "and optimize for shipped outcomes over activity.",
+    "Entrepreneurial e-commerce and growth operator. Since 2020 I've founded and run online brands " +
+    "and agencies — driving CRO, paid social (Meta/TikTok), copywriting, and web development end to " +
+    "end. I build and use my own AI tools for media generation and marketing automation (currently " +
+    "generating AI media for Burberry), and I ship technical work too — a production-grade, typed " +
+    "affiliate-tracking integration on Supabase/Vercel. I move fast, own the full funnel, and optimize " +
+    "for outcomes.",
 
   targetRoles: {
     primary: [
-      "Full-stack engineer",
-      "AI / agent engineer",
       "Growth engineer",
-      "Founding engineer",
-      "Automation / RevOps engineer",
+      "CRO / conversion optimization specialist",
+      "Digital marketing / paid social",
+      "E-commerce specialist",
+      "Marketing automation / martech",
+      "AI for marketing / AI media",
     ],
-    alsoAcceptable: ["Backend engineer", "Platform engineer", "Developer advocate (technical)"],
-    notRoles: ["Pure manual QA", "On-site IT support", "Non-technical sales"],
+    alsoAcceptable: [
+      "Founding team (growth / ops)",
+      "Web developer (frontend / no-code)",
+      "Automation engineer",
+      "Developer advocate",
+    ],
+    notRoles: ["Pure manual QA", "On-site IT support", "Cold-call telesales"],
     seniorityBand: ["junior", "mid", "founding"],
     keywords: [
-      "TypeScript",
-      "Next.js",
-      "React",
-      "Node.js",
-      "Supabase",
-      "Postgres",
-      "Vercel",
-      "Cloudflare Workers",
-      "AI agents",
-      "LLM",
-      "Claude",
-      "automation",
-      "Stripe",
-      "crypto payments",
+      "CRO",
+      "conversion rate optimization",
+      "e-commerce",
+      "Shopify",
+      "dropshipping",
+      "Meta ads",
+      "Facebook ads",
+      "Instagram",
+      "TikTok ads",
+      "paid social",
+      "digital marketing",
+      "copywriting",
+      "funnel",
+      "A/B testing",
+      "analytics",
       "growth",
       "affiliate",
       "martech",
-      "GitHub Actions",
+      "AI tools",
+      "AI media generation",
+      "marketing automation",
+      "web development",
+      "TypeScript",
+      "Next.js",
+      "Supabase",
+      "Vercel",
+      "graphic design",
+      "UX",
+      "customer support",
     ],
   },
 
+  education: ["Rudbeck Gymnasium — Economics & Business Development (2022–2025), upper-secondary"],
+
   experience: [
     {
-      title: "Founder / Solo Operator",
-      org: "Svee (independent)",
-      dates: "2023 – present",
-      scope: "Design, build, and run full-stack products and automation agents solo.",
-      shipped: "prototype",
+      title: "E-commerce & Marketing Specialist",
+      org: "L8Hasselblad",
+      dates: "2026 (8 months, full-time)",
+      scope: "Broad e-commerce & marketing remit.",
+      shipped: "live",
       bullets: [
-        "Built a production-grade, typed integration layer for the impact.com affiliate " +
-          "platform: a versioned HTTP client with retry/backoff/jitter and Retry-After handling, " +
-          "deferred-export submit→poll→download, and idempotent Postgres upserts — 78 passing " +
-          "unit tests (mocked HTTP) plus a real-Postgres (PGlite) integration suite.",
-        "Modelled a persona-aware analytics warehouse and a mobile-first dashboard (8-tile KPI " +
-          "grid, action-state funnel, SubId1/Shopify tracking, daily revenue+clicks trend) on " +
-          "Supabase and Vercel, scheduled by a GitHub Actions nightly cron.",
-        "Shipped a postback/webhook receiver with signature verification, replay dedupe, and " +
-          "GDPR-aware PII hashing (no raw PII in logs or repo).",
+        "CRO improvements, web development, and customer relations across a broad marketing remit — " +
+          "conversion optimization, on-site changes, and all kinds of marketing.",
       ],
     },
     {
-      title: "Builder — autonomous agents & pipelines",
-      org: "Svee (independent)",
-      dates: "2024 – present",
-      scope: "AI-agent orchestration for lead-gen and job applications.",
+      title: "AI — Media Generation (part-time)",
+      org: "Burberry",
+      dates: "2026 (part-time)",
+      scope: "AI media generation for a luxury fashion brand.",
+      shipped: "live",
+      bullets: [
+        "Generate AI media for one of the world's leading luxury fashion brands using my own AI " +
+          "experience and self-built AI tools to maximize results.",
+      ],
+    },
+    {
+      title: "Founder — Website Optimization Agency",
+      org: "Svee Performance",
+      dates: "2024–2025",
+      scope: "Website performance, UX, and conversion-rate optimization.",
+      shipped: "live",
+      bullets: [
+        "Founded an agency specializing in website performance, UX, and CRO — full-funnel optimization, " +
+          "product descriptions, and graphic design, from strategy and analysis to technical execution " +
+          "and client relations.",
+      ],
+    },
+    {
+      title: "Co-Founder & Marketing — Digital Marketing Agency",
+      org: "E-Flow Media",
+      dates: "2023–2024",
+      scope: "Social-media marketing agency.",
+      shipped: "live",
+      bullets: [
+        "Co-founded a social-media marketing agency: audience analysis, content strategy, ad management, " +
+          "and performance tracking across Facebook, Instagram, and TikTok.",
+      ],
+    },
+    {
+      title: "Co-Founder & Marketing — E-Commerce & Dropshipping",
+      org: "Silver Valley AB",
+      dates: "2020–2024",
+      scope: "Built and grew multiple e-commerce brands.",
+      shipped: "live",
+      bullets: [
+        "Initiated and grew several e-commerce brands end to end — product analysis, website development, " +
+          "digital marketing, ad editing, graphic design, photography, and copywriting; several became " +
+          "successful stores within 1–2 years.",
+      ],
+    },
+    {
+      title: "Co-Founder & Mentor — E-commerce Education",
+      org: "Mediocrity Misfits",
+      dates: "2022–2023",
+      scope: "Education program for young entrepreneurs.",
+      shipped: "live",
+      bullets: [
+        "Launched an education program supporting young entrepreneurs in building and running their own " +
+          "e-commerce businesses (daily tasks, follow-ups, personal coaching) — grew to over 4,000 active " +
+          "members in just two months.",
+      ],
+    },
+    {
+      title: "Builder — impact.com affiliate integration (technical project)",
+      org: "Svee (independent, this repository)",
+      dates: "2025–present",
+      scope: "Production-grade affiliate-tracking integration + warehouse + dashboard.",
       shipped: "prototype",
       bullets: [
-        "Designed an autonomous lead-gen pipeline: pluggable source adapters, a PageSpeed audit " +
-          "engine, Claude-powered copy generation, and a GitHub Actions cron writing to Supabase.",
-        "Built a job-application digital twin (this system): deterministic fit-scoring gate, " +
-          "KB-bound tailoring, and an approval-queue safety model that stops at every irreversible " +
-          "action.",
+        "Built a typed, resilient impact.com integration: a retrying HTTP client (backoff/jitter + " +
+          "Retry-After), idempotent Postgres upserts, a persona-aware analytics dashboard on Supabase/" +
+          "Vercel, and a GitHub Actions cron — 78 passing unit tests (plus a real-Postgres integration suite).",
       ],
     },
   ],
 
   skills: {
-    expert: ["TypeScript", "Next.js", "React", "Node.js", "Supabase", "Postgres", "Vercel"],
-    strong: [
-      "Cloudflare Workers",
-      "Tailwind CSS",
-      "prompt engineering",
-      "Claude / Claude Code",
-      "Stripe",
-      "crypto billing",
-      "GitHub Actions",
-      "zod",
-      "REST integration",
+    expert: [
+      "CRO / conversion optimization",
+      "Digital marketing",
+      "Meta / Facebook & TikTok ads",
+      "Copywriting",
+      "E-commerce (Shopify / dropshipping)",
+      "Graphic design",
     ],
-    working: ["Python", "SQL", "Solana tooling", "Monero tooling"],
+    strong: [
+      "Web development",
+      "AI tooling / AI media generation",
+      "Marketing automation",
+      "Analytics & A/B testing",
+      "Content strategy",
+      "UX",
+      "Customer support",
+      "TypeScript",
+      "Next.js",
+      "Supabase",
+      "Vercel",
+    ],
+    working: ["Postgres", "Python", "affiliate / martech integration", "photography"],
     domains: [
-      "affiliate / martech",
-      "AI-agent orchestration",
-      "growth automation",
-      "e-commerce / Shopify",
-      "data pipelines",
+      "e-commerce / DTC",
+      "digital marketing / paid social",
+      "CRO / growth",
+      "AI for marketing",
+      "martech / affiliate",
     ],
     languages: ["Swedish (native)", "English (fluent)"],
   },
 
-  // The ONLY numbers/artifacts the twin may cite. No new numbers beyond these.
+  // The ONLY numbers/facts the twin may cite. All are stated on the CV or verifiable in-repo.
   achievementBank: [
-    "Built a typed, resilient impact.com integration layer (retry/backoff/jitter + Retry-After, " +
-      "deferred-export polling, idempotent upserts) — 78 passing unit tests with mocked HTTP.",
-    "Added a real-Postgres integration suite (PGlite, in-process) that runs the schema, upserts, " +
-      "metrics CTEs, retention purge, and webhook handler against Postgres — caught and fixed a SQL bug.",
-    "Modelled a persona-aware analytics warehouse + mobile-first dashboard: 8-tile KPI grid " +
-      "(approved revenue, pending value, EPC, conversion rate, clicks, actions, payout, reversal rate).",
-    "Shipped a postback/webhook receiver with signature verification, replay dedupe, and GDPR-aware " +
-      "email hashing (no raw PII in logs or the repo).",
-    "Deployed always-up hosting: Supabase warehouse, Vercel functions + static dashboard, GitHub " +
-      "Actions nightly cron (sync → snapshot → reconcile).",
-    "Designed an autonomous lead-gen pipeline: pluggable source adapters, PageSpeed audit engine, " +
-      "Claude-powered copy generation, GitHub Actions cron, Supabase + Vercel.",
-    "Core stack: TypeScript, Next.js, React, Supabase/Postgres, Vercel, Cloudflare Workers, " +
-      "GitHub Actions. Languages: Swedish (native), English (fluent).",
+    "Grew an e-commerce education program (Mediocrity Misfits) to over 4,000 active members in just two months.",
+    "8 months full-time as E-commerce & Marketing Specialist at L8Hasselblad — CRO, web development, customer relations.",
+    "Generate AI media for Burberry (a leading luxury fashion brand) using self-built AI tools.",
+    "Founded Svee Performance, a website-optimization agency — full-funnel CRO, UX, and graphic design.",
+    "Grew several e-commerce brands to successful stores within 1–2 years (Silver Valley AB).",
+    "Co-founded E-Flow Media, running paid social across Facebook, Instagram, and TikTok — audience analysis, content strategy, ad management, performance tracking.",
+    "Built a production-grade impact.com affiliate integration (typed, resilient HTTP client + idempotent Postgres upserts + Supabase/Vercel dashboard) — 78 passing unit tests.",
+    "Core stack: CRO, Meta/TikTok ads, copywriting, e-commerce, web development, AI tooling; TypeScript/Supabase/Vercel. Swedish (native), English (fluent).",
   ],
 
   cvVariants: [
     {
       id: "A",
-      family: "Full-stack / product engineer",
+      family: "Growth / CRO / e-commerce",
       content:
-        "Tailored from the KB — full-stack/product emphasis: impact.com integration, warehouse + " +
-        "dashboard, end-to-end ownership. (Attach the real PDF or link here.)",
+        "Tailored from the master CV — growth/CRO/e-commerce emphasis: Svee Performance, L8Hasselblad, " +
+        "Silver Valley. (Attach the tailored CV export.)",
     },
     {
       id: "B",
-      family: "AI / agent / automation engineer",
+      family: "AI / automation / martech",
       content:
-        "Tailored from the KB — agents/automation emphasis: lead-gen pipeline, this job-application " +
-        "twin, Claude Code orchestration. (Attach the real PDF or link here.)",
+        "Tailored from the master CV — AI/automation emphasis: Burberry AI media, self-built AI tools, " +
+        "the impact.com integration, marketing automation. (Attach the tailored CV export.)",
     },
     {
       id: "C",
-      family: "Growth / RevOps / martech engineer",
+      family: "Digital marketing / paid social",
       content:
-        "Tailored from the KB — growth/martech emphasis: affiliate tracking, SubId attribution, " +
-        "Shopify, automated outreach. (Attach the real PDF or link here.)",
+        "Tailored from the master CV — paid-social/marketing emphasis: E-Flow Media, Meta/TikTok ad " +
+        "management, content strategy, copywriting. (Attach the tailored CV export.)",
     },
   ],
 
   letterComponents: {
     hooks: {
-      fullstack:
-        "I build and run full-stack systems end to end, so a team that values shipping over " +
-        "hand-offs is where I do my best work.",
-      agents:
-        "I've been building autonomous agents (lead-gen, and this very job-application twin) with " +
-        "Claude Code — orchestration with real guardrails, not demos.",
       growth:
-        "I've shipped the plumbing behind growth: affiliate tracking, attribution by SubId, and " +
-        "automated outreach that actually runs on a cron.",
+        "I've founded and run e-commerce brands and agencies since 2020 — CRO, paid social, and the full " +
+        "funnel — so growth that's owned end to end is where I do my best work.",
+      agents:
+        "I build and use my own AI tools for media and marketing (currently generating AI media for " +
+        "Burberry) — practical AI that ships results, not demos.",
+      fullstack:
+        "I ship technical work too — a typed, production-grade affiliate-tracking integration on " +
+        "Supabase/Vercel — alongside the marketing and CRO.",
     },
-    proofFullStack:
-      "I built a typed, resilient impact.com integration layer — a retrying HTTP client, " +
-      "deferred-export polling, and idempotent Postgres upserts — backed by 78 unit tests and a " +
-      "real-Postgres integration suite, then wired it to a Supabase warehouse and a Vercel dashboard.",
-    proofAgents:
-      "I built an autonomous lead-gen pipeline (pluggable adapters, PageSpeed audits, Claude-powered " +
-      "copy, GitHub Actions cron on Supabase) and a job-application agent with a hard approval gate " +
-      "at every irreversible step.",
     proofGrowth:
-      "I shipped affiliate/martech plumbing end to end: SubId1 attribution for Shopify placements, " +
-      "an action-state funnel, and a postback receiver with signature verification and dedupe.",
+      "I grew an e-commerce education program to over 4,000 active members in two months, founded a CRO " +
+      "agency (Svee Performance), and run paid social across Meta and TikTok — audience analysis, content, " +
+      "and performance tracking.",
+    proofAgents:
+      "I generate AI media for Burberry with my own AI tools, and I build marketing-automation and " +
+      "affiliate tooling — AI applied to real growth work, not demos.",
+    proofFullStack:
+      "I built a production-grade, typed affiliate-tracking integration for impact.com — a resilient HTTP " +
+      "client, idempotent Postgres upserts, and a Supabase/Vercel dashboard, backed by 78 unit tests.",
     workingStyle:
-      "Remote-first, autonomous, outcome-driven. I own the whole stack and ship fast.",
-    close: "Happy to walk through any of these builds live. — Svee",
+      "Entrepreneurial, fast under deadlines, outcome-driven — I own the full funnel and strive for perfection.",
+    close: "Happy to walk through any of these live. — Elliot",
   },
 
   screeningAnswers: {
@@ -214,48 +287,46 @@ export const SVEE_KB: KnowledgeBase = {
     noticePeriod: "<<notice period>>",
     visaSponsorshipNeeded: false,
     whyNow:
-      "I've been building production systems solo and want to do the same inside a team that ships " +
-      "fast and owns outcomes.",
-    relocation: "Remote-first; hybrid in the Stockholm area is fine; not relocating elsewhere.",
-    remoteSetup: "Stockholm-based, own equipment, security-conscious setup (GrapheneOS/Pixel).",
+      "I've built and grown e-commerce and marketing ventures largely solo and want to bring that " +
+      "ownership and speed to a team that ships fast.",
+    relocation: "Based in Sollentuna (Stockholm); hybrid in the Stockholm area or remote.",
+    remoteSetup: "Stockholm-based, own equipment.",
     tellMeAboutYourself:
-      "I'm a 20-year-old solo full-stack operator from Stockholm. I ship production systems end to " +
-      "end — TypeScript/Next.js on Supabase and Vercel — and build AI agents for automation. Most " +
-      "recently a typed impact.com affiliate integration with a warehouse and dashboard, and " +
-      "autonomous lead-gen and job-application agents.",
-    neverDisclose: ["crypto holdings", "health information", "exact home address"],
+      "I'm 20, from Stockholm, and I've been building e-commerce brands and marketing agencies since I " +
+      "was 14 — CRO, paid social, copywriting, and web development end to end. Lately I've gone deeper on " +
+      "AI tooling (I generate AI media for Burberry with my own tools) and technical projects like a typed " +
+      "affiliate-tracking integration. I move fast and own the whole funnel.",
+    neverDisclose: ["exact home address", "health information"],
   },
 
   preferences: {
-    mustHaves: ["Remote or hybrid-Stockholm", "async-friendly", "ships fast", "real ownership"],
-    niceToHaves: ["crypto / AI domain", "small team", "equity", "modern TS stack"],
-    // Short, matchable industry/term tokens (separators are normalized on match).
+    mustHaves: ["Remote or hybrid-Stockholm", "fast-paced", "real ownership", "outcome-driven"],
+    niceToHaves: ["e-commerce / DTC / AI domain", "small team / founding", "equity", "creative freedom"],
     dealbreakers: ["unpaid", "commission-only", "data broker", "payday loan", "gambling"],
     hoursConstraints: "",
     neverClaim: [
-      "a formal CS or university degree",
+      "a university or college degree (education is upper-secondary/gymnasium in Economics & Business Development)",
       "professional employment at any company that never employed him",
       "years of experience he does not have",
-      "any security clearance or professional certification",
+      "any professional certification or licence he does not hold",
       "a driver's licence",
     ],
   },
 
   sources: [
     {
-      name: "LinkedIn — remote TS/full-stack (Sweden/EU)",
+      name: "LinkedIn — growth/CRO/e-commerce (Sweden/EU, remote)",
       kind: "linkedin",
       url: "",
-      query: "https://www.linkedin.com/jobs/search/?keywords=full-stack%20typescript&location=Sweden&f_WT=2",
+      query: "https://www.linkedin.com/jobs/search/?keywords=growth%20OR%20CRO%20OR%20ecommerce&location=Sweden&f_WT=2",
     },
     {
-      name: "Wellfound (AngelList) — founding/full-stack, remote",
+      name: "Wellfound (AngelList) — growth / founding, remote",
       kind: "board",
-      url: "https://wellfound.com/role/full-stack-engineer",
-      query: "remote founding engineer typescript",
+      url: "https://wellfound.com/role/growth",
+      query: "remote growth ecommerce marketing",
     },
-    // Watched company ATS boards (public JSON — fetched automatically with `--fetch`).
-    // Replace the placeholder token/company with a real board you're watching.
+    // Watched company ATS boards (public JSON — fetched with `--fetch`). Replace the placeholders.
     {
       name: "Watched Greenhouse board (replace token)",
       kind: "ats",
@@ -269,16 +340,10 @@ export const SVEE_KB: KnowledgeBase = {
       query: "lever:your-company",
     },
     {
-      name: "Arbetsförmedlingen (Platsbanken)",
+      name: "Arbetsförmedlingen (Platsbanken) — marknadsföring / e-handel",
       kind: "board",
-      url: "https://arbetsformedlingen.se/platsbanken/annonser?q=utvecklare%20typescript",
-      query: "utvecklare typescript remote",
-    },
-    {
-      name: "thelocal.se / EU remote boards",
-      kind: "feed",
-      url: "",
-      query: "remote typescript engineer EU",
+      url: "https://arbetsformedlingen.se/platsbanken/annonser?q=e-handel%20marknadsf%C3%B6ring",
+      query: "e-handel marknadsföring CRO remote",
     },
   ],
 };

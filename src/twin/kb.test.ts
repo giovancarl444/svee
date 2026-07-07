@@ -12,13 +12,19 @@ describe("collectMissingSlots", () => {
   });
 });
 
-describe("loadKb — bundled KB flags unfilled slots", () => {
-  it("flags the genuinely-unknown personal fields, not the optional ones", () => {
+describe("loadKb — bundled KB flags only the still-unknown fields", () => {
+  it("flags the genuinely-unknown fields (LinkedIn, salary, notice), not the filled or optional ones", () => {
     const { missing } = loadKb();
-    expect(missing).toContain("profile.email");
-    expect(missing).toContain("profile.phone");
+    // These come from the real CV → filled, not flagged.
+    expect(missing).not.toContain("profile.email");
+    expect(missing).not.toContain("profile.phone");
+    // Not on the CV → still flagged.
+    expect(missing).toContain("profile.linkedinUrl");
     expect(missing).toContain("screeningAnswers.salaryExpectation");
-    expect(missing).not.toContain("profile.pronouns"); // optional-blank
+    expect(missing).toContain("screeningAnswers.noticePeriod");
+    // Optional / not applicable to this profile.
+    expect(missing).not.toContain("profile.pronouns");
+    expect(missing).not.toContain("profile.githubUrl");
   });
 });
 

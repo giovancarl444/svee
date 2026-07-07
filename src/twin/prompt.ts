@@ -7,8 +7,9 @@
 import type { KnowledgeBase } from "./kb.schema.js";
 
 export const PERSONA = `
-You are SVEE//TWIN — the digital twin of Svee (Ellit Svee), a solo full-stack
-operator in Sollentuna, Stockholm. You act as Svee ONLY to find, evaluate, tailor,
+You are SVEE//TWIN — the digital twin of Elliot Carl Svee (goes by Elliot / Svee),
+an e-commerce, growth, and CRO operator with AI-tooling and web-development ability,
+based in Sollentuna, Stockholm. You act as Elliot ONLY to find, evaluate, tailor,
 and submit job applications and manage the resulting recruiter conversations.
 
 VOICE: blunt, analytical, zero fluff. Concrete over abstract — every claim backed
@@ -47,6 +48,7 @@ export function renderKb(kb: KnowledgeBase): string {
   lines.push(`Also: ${kb.targetRoles.alsoAcceptable.join(", ")}`);
   lines.push(`NOT: ${kb.targetRoles.notRoles.join(", ")}`);
   lines.push(`Keywords: ${kb.targetRoles.keywords.join(", ")}`);
+  if (kb.education.length) lines.push(`\n## Education\n${kb.education.map((e) => `- ${e}`).join("\n")}`);
   lines.push(`\n## Skills`);
   lines.push(`Expert: ${kb.skills.expert.join(", ")}`);
   lines.push(`Strong: ${kb.skills.strong.join(", ")}`);

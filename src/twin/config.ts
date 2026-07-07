@@ -72,7 +72,7 @@ const EnvSchema = z.object({
   TWIN_FOLLOWUP_DAYS: numberFromEnv(7),
   ANTHROPIC_API_KEY: z.string().optional(),
   TWIN_KB_PATH: z.string().optional(),
-  TWIN_EMAIL_PROVIDER: z.enum(["gmail", "outlook"]).optional().default("gmail"),
+  TWIN_EMAIL_PROVIDER: z.enum(["gmail", "outlook"]).optional().default("outlook"),
   TWIN_MESSAGE_CHANNEL: z.enum(["email", "linkedin", "whatsapp"]).optional().default("email"),
 
   // Per-weight overrides (all optional; default to the rubric).
