@@ -13,8 +13,12 @@ export async function getSession(): Promise<Session | null> {
   return verifySession(store.get(SESSION_COOKIE)?.value);
 }
 
-/** Guard for Server Actions (mutations) — throws if auth is on and absent. */
+/**
+ * Guard for Server Actions (mutations). Fails CLOSED: an unconfigured instance
+ * rejects every mutation (Server Actions can be POSTed directly, independent of
+ * whether any page rendered), so "not configured" never means "wide open".
+ */
 export async function requireOperator(): Promise<void> {
-  if (!authConfigured()) return;
+  if (!authConfigured()) throw new Error('CORTEX is not configured — operator auth required.');
   if (!(await getSession())) throw new Error('unauthorized');
 }

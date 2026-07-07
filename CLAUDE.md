@@ -59,7 +59,9 @@ add a send path (email, WhatsApp, anything) without an explicit, gated decision.
 - Model IDs are pinned by env (`claude-haiku-4-5-20251001`, `claude-sonnet-5`,
   `claude-opus-4-8`). Don't send `temperature` to Sonnet 5 / Opus 4.8 — they
   reject it (see `docs/live-docs/anthropic-api.md`). On the OpenAI-compatible
-  provider, override the per-tier model IDs (e.g. `qwen3`, `deepseek-chat`).
+  provider, override the per-tier model IDs to an INSTRUCTION model
+  (e.g. `qwen2.5:7b-instruct`, `deepseek-chat`) — a reasoning model like qwen3
+  scored 0% valid structured output in the local benchmark (`demo/benchmark.md`).
 - Ground every integration in `docs/live-docs/` (captured from official docs), not
   memory. Refresh it before changing an adapter.
 

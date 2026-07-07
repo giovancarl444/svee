@@ -9,9 +9,35 @@ import {
 } from '@cortex/db';
 import { log } from './logger';
 
-function eventEnd(raw: unknown): string | null {
+/**
+ * Format an instant in the operator's timezone, with a tz label, so the brief
+ * reads in local time (e.g. "Wed, Jul 8, 11:00 AM EDT") instead of UTC. Times are
+ * not sensitive, so localizing them here does not widen the synthesis allowlist.
+ */
+function localDateTime(value: Date | string | null | undefined, tz: string): string | null {
+  if (!value) return null;
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZoneName: 'short',
+    }).format(d);
+  } catch {
+    return d.toISOString();
+  }
+}
+
+function eventEnd(raw: unknown, tz: string): string | null {
   const end = (raw as { end?: { dateTime?: string; date?: string } } | null)?.end;
-  return end?.dateTime ?? end?.date ?? null;
+  if (end?.dateTime) return localDateTime(end.dateTime, tz);
+  if (end?.date) return end.date; // all-day: a plain calendar date, no tz shift
+  return null;
 }
 
 function ymd(d: Date, tz: string): string {
@@ -53,17 +79,17 @@ export async function runSynthesis(now: Date = new Date()): Promise<SynthesisSum
       sender_display: a.senderName ?? 'unknown',
       action_summary: a.actionSummary,
       urgency: a.urgency,
-      deadline: a.deadlineAt ? a.deadlineAt.toISOString() : null,
+      deadline: localDateTime(a.deadlineAt, tz),
     })),
     loops: loops.map((l) => ({
       type: l.type,
       description: l.description,
-      due: l.dueAt ? l.dueAt.toISOString() : null,
+      due: localDateTime(l.dueAt, tz),
     })),
     events: events.map((e) => ({
       title: e.title,
-      start: e.start.toISOString(),
-      end: eventEnd(e.raw),
+      start: localDateTime(e.start, tz) ?? e.start.toISOString(),
+      end: eventEnd(e.raw, tz),
     })),
   });
 
