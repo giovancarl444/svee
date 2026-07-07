@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "tsx src/index.ts",
+    "serve": "tsx src/index.ts serve",
     "ingest": "tsx src/index.ts ingest",
     "triage": "tsx src/index.ts triage",
     "sync": "tsx src/index.ts sync",

@@ -8,12 +8,20 @@ import { closeDb, reconcileLoops } from '@cortex/db';
 import { runEscalation } from './escalate';
 import { runIngest } from './ingest';
 import { log } from './logger';
+import { serve } from './scheduler';
 import { runSynthesis } from './synthesize';
 import { runTriage } from './triage';
 
 const command = process.argv[2] ?? 'help';
 
 async function main(): Promise<void> {
+  // The always-on scheduler runs indefinitely; timers keep the process alive and
+  // the DB pool stays open, so it returns before the closeDb() below.
+  if (command === 'serve') {
+    await serve();
+    return;
+  }
+
   switch (command) {
     case 'ingest':
       log.info(await runIngest(), 'ingest complete');
@@ -41,7 +49,7 @@ async function main(): Promise<void> {
       break;
     case 'help':
     default:
-      log.info('CORTEX workers — commands: ingest | triage | escalate | loops | sync | synthesize');
+      log.info('CORTEX workers — commands: serve | ingest | triage | escalate | loops | sync | synthesize');
       break;
   }
   await closeDb();

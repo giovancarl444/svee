@@ -36,3 +36,16 @@ jobs:
         run: pnpm build
         env:
           DATABASE_URL: postgres://ci:ci@localhost:5432/ci
+
+  whatsapp-bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+      - name: Build + test the WhatsApp bridge (CGO)
+        working-directory: services/whatsapp-bridge
+        run: |
+          go build ./...
+          go test ./...

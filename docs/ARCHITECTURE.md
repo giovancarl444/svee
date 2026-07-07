@@ -78,9 +78,19 @@ the UI renders cleanly against an empty or briefly-unreachable DB (the Connector
 view surfaces datastore health explicitly). No secret is ever read into a client
 component — the auth banner and env reads happen server-side only.
 
+## Scheduling (always-on)
+
+The workers `serve` command runs the scheduler: an ingest→triage→escalate→loops
+cycle immediately and every `CORTEX_SYNC_INTERVAL_MIN`, plus the nightly Opus
+brief at `CORTEX_BRIEF_HOUR` (timezone-aware). Each run is isolated — a failure
+logs and retries next interval, never crashing the loop. Source adapters add
+exponential backoff on rate limits (429 / 403-rateLimit / 5xx). The `workers`
+compose service runs `serve`.
+
 ## Deployment
 
 All-in-one `docker-compose.yml`: `db` (Postgres 16) + a one-shot `migrate` +
-`dashboard`, with `workers` behind a `--profile workers` gate (Phase 1+). Ports
-bind to loopback; access is via Tailscale / reverse proxy. Put the Postgres
-volume on an encrypted disk for defense-in-depth on top of column encryption.
+`dashboard`, with `workers` (the always-on scheduler) behind a `--profile workers`
+gate and the read-only WhatsApp bridge behind `--profile whatsapp`. Ports bind to
+loopback; access is via Tailscale / reverse proxy. Put the Postgres volume on an
+encrypted disk for defense-in-depth on top of column encryption.

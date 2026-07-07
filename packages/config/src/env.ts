@@ -20,6 +20,8 @@ const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   CORTEX_TZ: z.string().default('UTC'),
   CORTEX_BRIEF_HOUR: z.coerce.number().int().min(0).max(23).default(20),
+  /** How often the scheduler runs an ingest→triage→escalate→loops cycle. */
+  CORTEX_SYNC_INTERVAL_MIN: z.coerce.number().int().min(1).default(5),
 
   // Datastore — the one hard requirement.
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),

@@ -62,12 +62,15 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
 
-  # Phase 1+: ingestion + intelligence workers. Not started by default.
+  # Ingestion + intelligence, always-on: the scheduler runs a sync cycle every
+  # CORTEX_SYNC_INTERVAL_MIN and the nightly Opus brief at CORTEX_BRIEF_HOUR.
+  # Gated behind a profile: `docker compose --profile workers up`.
   workers:
     build:
       context: .
       dockerfile: Dockerfile.workers
     profiles: ['workers']
+    command: ['pnpm', '--filter', '@cortex/workers', 'serve']
     environment:
       NODE_ENV: production
       DATABASE_URL: postgres://${POSTGRES_USER:-cortex}:${POSTGRES_PASSWORD:-cortex}@db:5432/${POSTGRES_DB:-cortex}
