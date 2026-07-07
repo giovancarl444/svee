@@ -15,6 +15,17 @@ describe("loadConfig", () => {
     expect(c.db.retentionDays).toBe(395);
   });
 
+  it("tolerates GitHub Variables saved as KEY=value (strips the self-prefix)", () => {
+    const c = loadConfig({
+      env: { ...baseEnv, DB: "DB=supabase", IMPACT_PERSONA: "IMPACT_PERSONA=partner", DATABASE_URL: "postgres://x" },
+      argv: [],
+    });
+    expect(c.db.driver).toBe("supabase");
+    expect(c.persona).toBe("partner");
+    // A legitimate value that doesn't repeat its key is untouched.
+    expect(c.db.url).toBe("postgres://x");
+  });
+
   it("rejects an invalid persona", () => {
     expect(() => loadConfig({ env: { ...baseEnv, IMPACT_PERSONA: "publisher" }, argv: [] })).toThrow(/IMPACT_PERSONA/);
   });

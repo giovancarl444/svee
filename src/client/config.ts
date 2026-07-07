@@ -121,8 +121,21 @@ function resolveLive(env: NodeJS.ProcessEnv, argv: string[]): boolean {
   return v === "1" || v === "true" || v === "yes";
 }
 
+/**
+ * Tolerate a common CI foot-gun: a GitHub Actions *Variable* saved with its full
+ * `KEY=value` line as the value (so `DB` arrives as `"DB=supabase"`). Strip a
+ * leading `<KEY>=` when a value redundantly repeats its own key.
+ */
+function normalizeEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const out: NodeJS.ProcessEnv = {};
+  for (const [k, v] of Object.entries(env)) {
+    out[k] = typeof v === "string" && v.startsWith(`${k}=`) ? v.slice(k.length + 1) : v;
+  }
+  return out;
+}
+
 export function loadConfig(opts: LoadConfigOptions = {}): ImpactConfig {
-  const env = opts.env ?? process.env;
+  const env = normalizeEnv(opts.env ?? process.env);
   const argv = opts.argv ?? process.argv.slice(2);
   const parsed = EnvSchema.parse(env);
 
