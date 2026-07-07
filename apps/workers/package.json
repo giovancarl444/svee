@@ -10,6 +10,7 @@
     "triage": "tsx src/index.ts triage",
     "sync": "tsx src/index.ts sync",
     "synthesize": "tsx src/index.ts synthesize",
+    "benchmark": "tsx src/demo/benchmark.ts",
     "gmail:auth": "tsx src/gmail-auth.ts",
     "outlook:auth": "tsx src/outlook-auth.ts",
     "hash-password": "tsx src/hash-password.ts",

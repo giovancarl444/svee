@@ -22,6 +22,13 @@ export {
   type ProviderTextInput,
 } from './provider';
 export { structuredCall, textCall, type StructuredCall, type StructuredResult, type TextCall } from './client';
-export { classifyTriage, shouldEscalate, CLASSIFICATION_SCHEMA, type TriageResult } from './triage';
+export {
+  classifyTriage,
+  normalizeTriageResult,
+  shouldEscalate,
+  CLASSIFICATION_SCHEMA,
+  TRIAGE_SYSTEM,
+  type TriageResult,
+} from './triage';
 export { classifyEscalate } from './escalate';
 export { generateTomorrowPlan } from './synthesis';

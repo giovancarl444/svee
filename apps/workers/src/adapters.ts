@@ -1,5 +1,6 @@
 import { getEnv } from '@cortex/config';
 import { CalendarAdapter, authedCalendarClient, makeCalendarApi } from '@cortex/calendar';
+import type { NormalizedItem, SourceName } from '@cortex/core';
 import { dbCheckpointStore } from '@cortex/db';
 import { GmailAdapter, authedClient, makeGmailApi } from '@cortex/gmail';
 import {
@@ -11,8 +12,32 @@ import {
 } from '@cortex/imap';
 import { IMessageAdapter, makeIMessageBridge } from '@cortex/imessage';
 import { WhatsAppAdapter, makeWhatsAppBridge } from '@cortex/whatsapp';
+import { DemoAdapter } from './demo/demo-adapter';
+import { buildDemoInbox } from './demo/demo-inbox';
 import { log } from './logger';
 import { registerAdapter } from './registry';
+
+/**
+ * DEMO mode (CORTEX_DEMO=1): register ONLY synthetic sources and skip every real
+ * adapter, so the whole pipeline can be proven end-to-end with zero real accounts
+ * and zero network. One DemoAdapter per source slot the fixtures use.
+ */
+function registerDemoAdapters(): void {
+  const items = buildDemoInbox();
+  const bySource = new Map<SourceName, NormalizedItem[]>();
+  for (const it of items) {
+    const list = bySource.get(it.source) ?? [];
+    list.push(it);
+    bySource.set(it.source, list);
+  }
+  for (const [source, list] of bySource) {
+    registerAdapter(new DemoAdapter({ source, items: list, store: dbCheckpointStore }));
+  }
+  log.info(
+    { sources: [...bySource.keys()], items: items.length },
+    'adapters: DEMO mode — synthetic inbox registered (no real accounts, no network)',
+  );
+}
 
 /**
  * Build and register the adapters that are actually configured in env. A source
@@ -21,6 +46,13 @@ import { registerAdapter } from './registry';
  */
 export function wireAdapters(): void {
   const env = getEnv();
+
+  // DEMO mode is exclusive: synthetic sources only, no real adapters wired.
+  if (env.CORTEX_DEMO && env.CORTEX_DEMO !== '0' && env.CORTEX_DEMO !== 'false') {
+    registerDemoAdapters();
+    return;
+  }
+
   const googleReady =
     env.GMAIL_CLIENT_ID && env.GMAIL_CLIENT_SECRET && env.GMAIL_REDIRECT_URI && env.GMAIL_REFRESH_TOKEN;
 

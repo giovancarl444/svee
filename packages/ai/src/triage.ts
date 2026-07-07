@@ -28,7 +28,7 @@ export const CLASSIFICATION_SCHEMA: Anthropic.Tool.InputSchema = {
   required: ['category', 'urgency', 'requires_action', 'action_summary', 'deadline', 'confidence'],
 };
 
-const SYSTEM = `You are the triage layer of a personal assistant for a solo operator.
+export const TRIAGE_SYSTEM = `You are the triage layer of a personal assistant for a solo operator.
 You classify ONE inbound item, given as JSON. Be ruthless about what actually
 needs the human — most items do not. Weigh the sender_importance
 (0 mute, 1 normal, 2 important, 3 VIP).
@@ -42,6 +42,47 @@ Record your verdict via the record_triage tool:
 - confidence: 0.0-1.0 in your own classification.
 
 No prose. Only the tool call.`;
+
+const CATEGORY_SET = new Set<string>(CATEGORIES);
+
+/**
+ * Coerce a model's raw structured output into a VALID {@link TriageResult}.
+ *
+ * The pinned Claude tiers honor the tool schema's `enum`/`required`, but local /
+ * OpenAI-compatible models (Ollama qwen, DeepSeek, …) do not — they occasionally
+ * omit `category`, return an out-of-vocabulary value, or put a natural-language
+ * deadline like "Friday" where ISO-8601 is expected. Without this guard those
+ * replies violate the `classifications` NOT-NULL/enum constraints (a real failure
+ * observed with qwen2.5 on the local provider) or insert an Invalid Date. This is
+ * the one place that reconciles imperfect model output with the DB's invariants.
+ */
+export function normalizeTriageResult(raw: Partial<TriageResult> | null | undefined): TriageResult {
+  const r = raw ?? {};
+  const category: Category =
+    typeof r.category === 'string' && CATEGORY_SET.has(r.category) ? (r.category as Category) : 'fyi';
+
+  const urgencyNum = Number(r.urgency);
+  const urgency = Number.isFinite(urgencyNum) ? Math.max(0, Math.min(3, Math.round(urgencyNum))) : 0;
+
+  const confNum = Number(r.confidence);
+  const confidence = Number.isFinite(confNum) ? Math.max(0, Math.min(1, confNum)) : 0;
+
+  // Accept an ISO/parseable date; otherwise drop it (never insert an Invalid Date).
+  let deadline: string | null = null;
+  if (typeof r.deadline === 'string' && r.deadline.trim()) {
+    const d = new Date(r.deadline);
+    deadline = Number.isNaN(d.getTime()) ? null : d.toISOString();
+  }
+
+  return {
+    category,
+    urgency,
+    requires_action: Boolean(r.requires_action),
+    action_summary: typeof r.action_summary === 'string' ? r.action_summary : '',
+    deadline,
+    confidence,
+  };
+}
 
 /** Whether a triage result should be escalated to the Sonnet tier (Phase 3). */
 export function shouldEscalate(r: TriageResult): boolean {
@@ -58,11 +99,11 @@ export async function classifyTriage(
   const { data } = await structuredCall<TriageResult>({
     purpose: 'triage',
     model,
-    system: SYSTEM,
+    system: TRIAGE_SYSTEM,
     payload,
     tool: { name: 'record_triage', description: 'Record the triage classification of one inbound item.', schema: CLASSIFICATION_SCHEMA },
     ...(relatedItemId ? { relatedItemId } : {}),
     maxTokens: 400,
   });
-  return { result: data, model };
+  return { result: normalizeTriageResult(data), model };
 }

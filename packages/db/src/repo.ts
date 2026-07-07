@@ -435,8 +435,13 @@ export async function getEscalationCandidates(
     join latest l on l.item_id = i.id
     left join entities e on e.id = i.sender_identity
     where (l.confidence < 0.6 or l.category = 'financial' or l.deadline_at is not null)
+      -- Idempotent guard: skip items that ALREADY have a tier-2 pass. Keyed on the
+      -- escalation marker (not the model id) so escalation still fires when triage
+      -- and escalate share one model — the local/free profile's default (Ollama),
+      -- where a model-id guard would treat the triage pass as already-escalated.
       and not exists (
-        select 1 from classifications c2 where c2.item_id = i.id and c2.model = ${escalateModel}
+        select 1 from classifications c2
+        where c2.item_id = i.id and c2.reasoning = 'escalated (tier-2)'
       )
     order by i.timestamp desc
     limit ${limit}

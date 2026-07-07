@@ -45,6 +45,10 @@ const EnvSchema = z.object({
   CORTEX_MODEL_ESCALATE: z.string().default('claude-sonnet-5'),
   CORTEX_MODEL_SYNTHESIS: z.string().default('claude-opus-4-8'),
 
+  // Demo mode: register a synthetic, ground-truth-labeled inbox instead of any
+  // real source adapter, so the whole pipeline runs with zero real accounts.
+  CORTEX_DEMO: z.string().optional(),
+
   // Dashboard auth (Constraint §10).
   CORTEX_AUTH_SECRET: z.string().optional(),
   CORTEX_OPERATOR_EMAIL: z.string().optional(),

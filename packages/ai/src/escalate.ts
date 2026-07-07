@@ -1,7 +1,7 @@
 import { structuredCall } from './client';
 import { modelFor } from './models';
 import type { EscalatePayload } from './redaction';
-import { CLASSIFICATION_SCHEMA, type TriageResult } from './triage';
+import { CLASSIFICATION_SCHEMA, normalizeTriageResult, type TriageResult } from './triage';
 
 const ESCALATE_SYSTEM = `You are the escalation layer of a personal assistant for a solo operator.
 The Haiku triage pass was low-confidence or the item touches money, legal, or a
@@ -34,5 +34,5 @@ export async function classifyEscalate(
     ...(relatedItemId ? { relatedItemId } : {}),
     maxTokens: 600,
   });
-  return { result: data, model };
+  return { result: normalizeTriageResult(data), model };
 }

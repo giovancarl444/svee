@@ -95,10 +95,12 @@ class AnthropicProvider implements ModelProvider {
 
 interface OpenAIChatMessage {
   content: string | null;
+  /** Some reasoning models (Qwen3 via Ollama) return their chain here, leaving content empty. */
+  reasoning?: string | null;
   tool_calls?: Array<{ function?: { name?: string; arguments?: string } }>;
 }
 interface OpenAIChatResponse {
-  choices?: Array<{ message?: OpenAIChatMessage }>;
+  choices?: Array<{ message?: OpenAIChatMessage; finish_reason?: string }>;
   usage?: { prompt_tokens?: number; completion_tokens?: number };
 }
 
@@ -111,8 +113,11 @@ function parseJson<T>(s: string): T {
  * Tolerant parse for models that answer with JSON wrapped in prose or ```json
  * fences instead of a clean tool call. Grabs the first balanced object.
  */
-function extractJson<T>(s: string): T {
-  const unfenced = s.replace(/```(?:json)?/gi, '');
+export function extractJson<T>(s: string): T {
+  // Reasoning models (e.g. Qwen3) may prepend a <think>…</think> block; strip it
+  // so the brace-matching below doesn't latch onto braces inside the reasoning.
+  const unthought = s.replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi, '');
+  const unfenced = unthought.replace(/```(?:json)?/gi, '');
   const start = unfenced.indexOf('{');
   const end = unfenced.lastIndexOf('}');
   if (start === -1 || end === -1 || end < start) {
@@ -202,6 +207,14 @@ class OpenAICompatProvider implements ModelProvider {
     });
     const content2 = r2.choices?.[0]?.message?.content;
     if (!content2) {
+      const choice = r2.choices?.[0];
+      if (choice?.message?.reasoning || choice?.finish_reason === 'length') {
+        throw new Error(
+          `Model "${input.model}" returned no answer content — it looks like a reasoning model that spent the ` +
+            `token budget "thinking" (finish_reason=${choice?.finish_reason ?? 'n/a'}). CORTEX's bounded structured ` +
+            `calls need a NON-reasoning model (e.g. qwen2.5-instruct / deepseek-chat), or reasoning disabled.`,
+        );
+      }
       throw new Error('OpenAI-compatible endpoint returned no content for a structured call.');
     }
     return { data: extractJson<T>(content2), usage: this.#usage(r2) };

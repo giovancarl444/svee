@@ -52,6 +52,11 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER:-cortex}:${POSTGRES_PASSWORD:-cortex}@db:5432/${POSTGRES_DB:-cortex}
       CORTEX_TZ: ${CORTEX_TZ:-UTC}
       CORTEX_AUTH_SECRET: ${CORTEX_AUTH_SECRET:-}
+      # Both of these are required (alongside CORTEX_AUTH_SECRET) for the login
+      # gate to be ENFORCED — see apps/dashboard/lib/auth.ts:authConfigured().
+      # Without them the (secure) layout renders unauthenticated (fails open).
+      CORTEX_OPERATOR_EMAIL: ${CORTEX_OPERATOR_EMAIL:-}
+      CORTEX_OPERATOR_PASSWORD_HASH: ${CORTEX_OPERATOR_PASSWORD_HASH:-}
       CORTEX_ENCRYPTION_KEY: ${CORTEX_ENCRYPTION_KEY:-}
     ports:
       - '127.0.0.1:3000:3000'
