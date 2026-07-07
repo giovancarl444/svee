@@ -6,9 +6,9 @@
 import type { Database } from "./db.js";
 import { daysAgo } from "../util/date.js";
 
-async function deleteOlderThan(db: Database, table: string, cutoffIso: string): Promise<number> {
+async function deleteOlderThan(db: Database, table: string, dateColumn: string, cutoffIso: string): Promise<number> {
   const rows = await db.query<{ n: number }>(
-    `WITH d AS (DELETE FROM ${table} WHERE event_date < $1 RETURNING 1) SELECT count(*)::int AS n FROM d`,
+    `WITH d AS (DELETE FROM ${table} WHERE ${dateColumn} < $1 RETURNING 1) SELECT count(*)::int AS n FROM d`,
     [cutoffIso],
   );
   return rows[0]?.n ?? 0;
@@ -17,9 +17,11 @@ async function deleteOlderThan(db: Database, table: string, cutoffIso: string): 
 export async function purgeExpired(
   db: Database,
   retentionDays: number,
-): Promise<{ cutoff: string; clicks: number; actions: number }> {
+): Promise<{ cutoff: string; clicks: number; actions: number; webhookEvents: number }> {
   const cutoff = daysAgo(retentionDays).toISOString();
-  const clicks = await deleteOlderThan(db, "clicks", cutoff);
-  const actions = await deleteOlderThan(db, "actions", cutoff);
-  return { cutoff, clicks, actions };
+  const clicks = await deleteOlderThan(db, "clicks", "event_date", cutoff);
+  const actions = await deleteOlderThan(db, "actions", "event_date", cutoff);
+  // webhook_events can carry PII-adjacent postback params — purge by receipt time.
+  const webhookEvents = await deleteOlderThan(db, "webhook_events", "received_at", cutoff);
+  return { cutoff, clicks, actions, webhookEvents };
 }

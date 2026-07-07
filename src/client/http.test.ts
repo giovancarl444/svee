@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { HttpClient, parseRetryAfter } from "./http.js";
 import { isImpactError } from "./errors.js";
+import { nullLogger } from "./logger.js";
 import { fakeDeps, testConfig, decodeBasic } from "../test-support/http-fakes.js";
 
 describe("HttpClient auth + requests", () => {
@@ -101,6 +102,36 @@ describe("HttpClient retry + backoff", () => {
     const res = await http.get<{ ok: number }>("/x");
     expect(res.data.ok).toBe(1);
     expect(calls).toHaveLength(2);
+  });
+
+  it("honours caller cancellation as non-retryable 'canceled'", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    let calls = 0;
+    const fetchImpl = async (_url: unknown, init: unknown): Promise<Response> => {
+      calls++;
+      if ((init as { signal?: AbortSignal }).signal?.aborted) {
+        throw Object.assign(new Error("aborted"), { name: "AbortError" });
+      }
+      return new Response("{}", { status: 200 });
+    };
+    const http = new HttpClient(testConfig(), {
+      fetch: fetchImpl as unknown as typeof fetch,
+      sleep: async () => {},
+      logger: nullLogger,
+      random: () => 0.5,
+    });
+    const err = await http.get("/x", { signal: controller.signal }).catch((e) => e);
+    expect(isImpactError(err) && err.kind).toBe("canceled");
+    expect(isImpactError(err) && err.retryable).toBe(false);
+    expect(calls).toBe(1); // not retried
+  });
+
+  it("caps a pathological Retry-After to retryAfterMaxMs", async () => {
+    const { deps, sleeps } = fakeDeps([{ status: 429, headers: { "Retry-After": "86400" } }, { json: { ok: 1 } }]);
+    const http = new HttpClient(testConfig({ HTTP_RETRY_AFTER_MAX_MS: "5000" }), deps);
+    await http.get("/x");
+    expect(sleeps[0]).toBe(5000); // 24h collapsed to the cap, not 86_400_000ms
   });
 });
 

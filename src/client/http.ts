@@ -143,17 +143,19 @@ export class HttpClient {
       const { signal, cancel } = this.composeSignal(timeoutMs, options.signal);
       try {
         const res = await this.deps.fetch(url, { method, headers, body: bodyInit, signal });
-        cancel();
-        const durationMs = Date.now() - started;
         this.logRateLimit(res, logPath);
 
         if (res.ok) {
-          this.deps.logger.debug("request ok", { method, path: logPath, status: res.status, attempt, durationMs });
+          // Keep the timeout armed THROUGH the body read: fetch resolves on
+          // headers, and a stalled body must still trip the timeout.
           const data = await this.parseBody<T>(res, parse);
+          cancel();
+          this.deps.logger.debug("request ok", { method, path: logPath, status: res.status, attempt, durationMs: Date.now() - started });
           return { status: res.status, headers: res.headers, data, attempts: attempt };
         }
 
         const bodyText = await safeText(res);
+        cancel();
         const err = ImpactError.fromStatus(res.status, {
           method,
           path: logPath,
@@ -178,6 +180,15 @@ export class HttpClient {
         throw err;
       } catch (rawErr) {
         cancel();
+        // Caller-initiated cancellation (external AbortSignal) is honoured
+        // immediately and never retried — it is not a transient failure.
+        if (options.signal?.aborted) {
+          throw new ImpactError("canceled", "Request canceled by caller.", {
+            method,
+            path: logPath,
+            cause: options.signal.reason,
+          });
+        }
         if (rawErr instanceof ImpactError && rawErr.kind !== "network" && rawErr.kind !== "timeout") {
           throw rawErr; // already classified & non-retryable (or exhausted)
         }
@@ -249,10 +260,12 @@ export class HttpClient {
    * If the server sent Retry-After, honour it as a floor.
    */
   backoffDelay(attempt: number, retryAfterSeconds?: number): number {
-    const { backoffBaseMs, backoffMaxMs } = this.config.http;
+    const { backoffBaseMs, backoffMaxMs, retryAfterMaxMs } = this.config.http;
     const exp = Math.min(backoffMaxMs, backoffBaseMs * 2 ** (attempt - 1));
     const jittered = Math.floor(this.deps.random() * exp);
-    const retryAfterMs = retryAfterSeconds != null ? retryAfterSeconds * 1000 : 0;
+    // Honour Retry-After as a floor, but cap it so a pathological value
+    // (e.g. `Retry-After: 86400`) can't block a stage for hours.
+    const retryAfterMs = retryAfterSeconds != null ? Math.min(retryAfterSeconds * 1000, retryAfterMaxMs) : 0;
     return Math.max(jittered, retryAfterMs);
   }
 

@@ -29,6 +29,22 @@ export interface Database {
  * Render a parameterized multi-row upsert. Columns are taken from the union of
  * all row keys (missing keys bind to NULL), so heterogeneous rows are safe.
  */
+/**
+ * Collapse rows that share the same conflict-key tuple, keeping the LAST
+ * occurrence. Postgres rejects a single `INSERT ... ON CONFLICT DO UPDATE` whose
+ * VALUES contain the same conflict key twice ("cannot affect row a second time")
+ * — and two API pages can legitimately carry the same natural key. Last-wins
+ * matches the intent of an idempotent upsert.
+ */
+export function dedupeByConflict(rows: Row[], conflictColumns: string[]): Row[] {
+  const byKey = new Map<string, Row>();
+  for (const row of rows) {
+    const key = JSON.stringify(conflictColumns.map((c) => row[c] ?? null));
+    byKey.set(key, row);
+  }
+  return Array.from(byKey.values());
+}
+
 export function buildUpsert(
   table: string,
   rows: Row[],
@@ -36,11 +52,12 @@ export function buildUpsert(
   options: UpsertOptions = {},
 ): { text: string; values: unknown[] } {
   if (rows.length === 0) throw new Error("buildUpsert: no rows");
-  const columns = Array.from(new Set(rows.flatMap((r) => Object.keys(r))));
+  const deduped = dedupeByConflict(rows, conflictColumns);
+  const columns = Array.from(new Set(deduped.flatMap((r) => Object.keys(r))));
   if (columns.length === 0) throw new Error("buildUpsert: rows have no columns");
 
   const values: unknown[] = [];
-  const tuples = rows.map((row) => {
+  const tuples = deduped.map((row) => {
     const placeholders = columns.map((col) => {
       values.push(row[col] ?? null);
       return `$${values.length}`;
@@ -91,12 +108,15 @@ export class PgDatabase implements Database {
   async upsert(table: string, rows: Row[], conflictColumns: string[], options?: UpsertOptions): Promise<number> {
     if (rows.length === 0) return 0;
     const pool = await this.getPool();
+    // Dedupe across the WHOLE batch first (last-wins), so a conflict key split
+    // across two chunks can't produce inconsistent results or a crash.
+    const deduped = dedupeByConflict(rows, conflictColumns);
     // Chunk to stay well under Postgres' 65535 bind-parameter limit.
-    const colCount = Math.max(1, new Set(rows.flatMap((r) => Object.keys(r))).size);
+    const colCount = Math.max(1, new Set(deduped.flatMap((r) => Object.keys(r))).size);
     const chunkSize = Math.max(1, Math.floor(60000 / colCount));
     let affected = 0;
-    for (let i = 0; i < rows.length; i += chunkSize) {
-      const chunk = rows.slice(i, i + chunkSize);
+    for (let i = 0; i < deduped.length; i += chunkSize) {
+      const chunk = deduped.slice(i, i + chunkSize);
       const { text, values } = buildUpsert(table, chunk, conflictColumns, options);
       const res = await pool.query(text, values);
       affected += res.rowCount ?? 0;

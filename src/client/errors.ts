@@ -12,6 +12,7 @@ export type ImpactErrorKind =
   | "client" //         other 4xx — request problem (not retryable)
   | "network" //        connection/DNS/timeout (retryable)
   | "timeout" //        request exceeded configured timeout (retryable)
+  | "canceled" //       aborted by the caller's AbortSignal (NOT retryable)
   | "deferred_timeout" // async job never reached COMPLETED in time
   | "config" //         misconfiguration caught before the request
   | "parse"; //         response body was not the expected shape

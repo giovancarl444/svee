@@ -14,10 +14,24 @@ import { createDatabase } from "../sync/db.js";
 import { createLogger } from "../client/logger.js";
 import { handlePostback, type PostbackRequest } from "./handler.js";
 
-function readBody(req: IncomingMessage): Promise<string> {
+/** Postbacks are tiny; cap the body hard to prevent memory-exhaustion DoS. */
+const MAX_BODY_BYTES = 256 * 1024;
+
+class PayloadTooLargeError extends Error {}
+
+function readBody(req: IncomingMessage, maxBytes = MAX_BODY_BYTES): Promise<string> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
-    req.on("data", (c: Buffer) => chunks.push(c));
+    let size = 0;
+    req.on("data", (c: Buffer) => {
+      size += c.length;
+      if (size > maxBytes) {
+        req.destroy();
+        reject(new PayloadTooLargeError(`request body exceeded ${maxBytes} bytes`));
+        return;
+      }
+      chunks.push(c);
+    });
     req.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
     req.on("error", reject);
   });
@@ -54,11 +68,20 @@ async function main() {
       res.writeHead(result.status, { "content-type": "application/json" });
       res.end(JSON.stringify(result.body));
     } catch (err) {
+      if (err instanceof PayloadTooLargeError) {
+        res.writeHead(413, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "payload too large" }));
+        return;
+      }
       logger.error("postback handler error", { error: (err as Error).message });
       res.writeHead(500, { "content-type": "application/json" });
       res.end(JSON.stringify({ error: "internal error" }));
     }
   });
+
+  // Slow-loris / stalled-request guards.
+  server.requestTimeout = 20_000;
+  server.headersTimeout = 10_000;
 
   server.listen(config.webhook.port, () => {
     logger.info("webhook receiver listening", { port: config.webhook.port, path: "/postback" });

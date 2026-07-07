@@ -174,3 +174,29 @@ registration fails, note it and move on — never let MCP block the REST build.
   `HTTPS_PROXY` unless `NODE_USE_ENV_PROXY=1` (Node ≥ 22.21). Irrelevant once
   running where impact.com is directly reachable, but note it if you test from a
   proxied box.
+
+## 11. Hardening applied (adversarial review)
+
+A multi-lens adversarial review (correctness / resilience / security-GDPR /
+idempotency, each finding independently verified) ran over the whole tree.
+Nine confirmed defects were fixed — all covered by tests:
+
+- **Webhook durability** — the audit/dedupe row was written before the action
+  upsert, so a failed upsert + provider redelivery could silently drop an
+  action. Reordered: the idempotent action upsert now happens first, so a crash
+  between the two is recovered by redelivery (`webhooks/handler.ts`).
+- **Secret + PII at rest** — the `?token=` shared secret (and raw emails) were
+  persisted into `webhook_events.payload` / `actions.raw`. Now stripped/hashed
+  at ingest via `sanitizePostbackParams`; `webhook_events` is also purged by the
+  retention job.
+- **HTTP caller cancellation** — an external `AbortSignal` was mis-classified as
+  a retryable timeout; now surfaces as non-retryable `canceled`.
+- **`Retry-After` cap** — a pathological `Retry-After` could block a stage for
+  hours; capped at `HTTP_RETRY_AFTER_MAX_MS` (default 60s).
+- **Body-read timeout** — the per-request timeout was cleared before the
+  response body was read; now armed through the body read.
+- **Webhook server DoS** — added a 256 KiB body cap + request/header timeouts.
+- **Upsert dedupe** — a batch with a repeated natural key crashed the whole
+  `INSERT`; `buildUpsert` now dedupes by conflict key (last-wins).
+- **Purge observability** — retention-purge failures are now a first-class sync
+  stage (so the cron's exit code catches them), not just a log line.

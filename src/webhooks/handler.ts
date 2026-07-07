@@ -9,8 +9,26 @@ import type { Logger } from "../client/logger.js";
 import { verifyPostback } from "./verify.js";
 import { actionToRow } from "../sync/mappers.js";
 import { firstOf } from "../util/coerce.js";
-import { hashValue } from "../util/hash.js";
+import { hashValue, hashEmail } from "../util/hash.js";
 import type { Action } from "../types/impact.js";
+
+/** Param keys that must NEVER be persisted (auth material). */
+const SECRET_PARAM = /^(token|secret|signature|sig|auth|password|apikey|api_key)$/i;
+
+/**
+ * Strip auth material (the shared-secret token, signatures) and hash any
+ * PII-adjacent value BEFORE anything is persisted. The token param is our own
+ * auth secret — storing it next to the data it protects would let anyone with
+ * read access forge postbacks. Emails are hashed at ingest (GDPR §3.7).
+ */
+export function sanitizePostbackParams(params: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(params)) {
+    if (SECRET_PARAM.test(k)) continue;
+    out[k] = /email/i.test(k) ? hashEmail(v) : v;
+  }
+  return out;
+}
 
 export interface PostbackRequest {
   method: string;
@@ -87,8 +105,9 @@ export async function handlePostback(req: PostbackRequest, deps: PostbackDeps): 
     return { status: 401, body: { error: "unauthorized", reason: verify.reason } };
   }
 
-  const eventId = firstOf(params, ["EventId", "ActionId", "Id", "Oid", "SnapshotId"]) ?? hashValue(req.rawBody || JSON.stringify(params));
-  const eventType = firstOf(params, ["EventType", "ActionStatus", "State"]) ?? "action";
+  const safe = sanitizePostbackParams(params);
+  const eventId = firstOf(safe, ["EventId", "ActionId", "Id", "Oid", "SnapshotId"]) ?? hashValue(JSON.stringify(safe));
+  const eventType = firstOf(safe, ["EventType", "ActionStatus", "State"]) ?? "action";
 
   // DB=none: acknowledge but don't persist (useful for local echo testing).
   if (config.db.driver === "none") {
@@ -96,23 +115,27 @@ export async function handlePostback(req: PostbackRequest, deps: PostbackDeps): 
     return { status: 200, body: { ok: true, eventId, persisted: false } };
   }
 
-  // Dedupe on event id via an idempotent insert into the audit log.
+  // Upsert the action FIRST — it is idempotent on the natural key, so doing it
+  // before the dedupe/audit write makes the whole handler crash-safe: if we die
+  // between the two, redelivery simply re-upserts (no double count) and then
+  // records the audit row. Recording the audit row first would let a failed
+  // upsert + redelivery silently drop the action forever.
+  const row = actionToRow(postbackToAction(safe));
+  if (row) {
+    await db.upsert("actions", [row], ["id"]);
+  }
+
+  // Record the (sanitized) event for audit + dedupe. Never store the raw token.
   const inserted = await db.query<{ event_id: string }>(
     `INSERT INTO webhook_events (event_id, event_type, signature_ok, payload)
      VALUES ($1, $2, $3, $4) ON CONFLICT (event_id) DO NOTHING RETURNING event_id`,
-    [eventId, eventType, verify.ok, JSON.stringify(params)],
+    [eventId, eventType, verify.ok, JSON.stringify(safe)],
   );
-  if (inserted.length === 0) {
-    logger.info("postback duplicate ignored", { eventId });
-    return { status: 200, body: { ok: true, eventId, duplicate: true } };
-  }
-
-  const row = actionToRow(postbackToAction(params));
-  if (row) {
-    await db.upsert("actions", [row], ["id"]);
-    logger.info("postback upserted action", { eventId, actionId: row.id });
-  } else {
-    logger.warn("postback had no resolvable action id — logged only", { eventId });
-  }
-  return { status: 200, body: { ok: true, eventId, duplicate: false } };
+  const duplicate = inserted.length === 0;
+  logger.info(duplicate ? "postback duplicate (action re-upserted idempotently)" : "postback processed", {
+    eventId,
+    actionId: row?.id,
+    duplicate,
+  });
+  return { status: 200, body: { ok: true, eventId, duplicate } };
 }

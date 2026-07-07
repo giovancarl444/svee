@@ -31,7 +31,7 @@ export interface SyncSummary {
   startedAt: string;
   finishedAt: string;
   stages: StageResult[];
-  purged?: { clicks: number; actions: number };
+  purged?: { clicks: number; actions: number; webhookEvents: number };
 }
 
 export interface SyncOptions {
@@ -156,13 +156,14 @@ export async function runSync(client: ImpactClient, db: Database, options: SyncO
   }, log);
 
   // --- Retention purge -----------------------------------------------------
+  // Run as a real stage so a purge failure surfaces in summary.stages (which the
+  // cron entrypoint turns into a non-zero exit), not just a log line.
   if (!options.skipPurge) {
-    try {
-      summary.purged = await purgeExpired(db, client.config.db.retentionDays);
-      log("sync: purged expired rows", summary.purged);
-    } catch (err) {
-      log("sync: purge FAILED", { error: (err as Error).message });
-    }
+    await runStage(summary, "purge", async () => {
+      const purged = await purgeExpired(db, client.config.db.retentionDays);
+      summary.purged = purged;
+      return purged.clicks + purged.actions + purged.webhookEvents;
+    }, log);
   }
 
   summary.finishedAt = new Date().toISOString();

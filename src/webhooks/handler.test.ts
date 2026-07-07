@@ -5,27 +5,30 @@ import { nullLogger } from "../client/logger.js";
 import { testConfig } from "../test-support/http-fakes.js";
 import type { Database, Row } from "../sync/db.js";
 
-/** In-memory DB double: records webhook_events (with dedupe) and action upserts. */
+/** In-memory DB double: dedupes webhook_events and upserts actions idempotently
+ *  by conflict key (modelling the real ON CONFLICT behaviour). */
 function fakeDb() {
   const events = new Set<string>();
-  const actions: Row[] = [];
+  const payloads: string[] = [];
+  const actions = new Map<string, Row>();
   const db: Database = {
     async query<T = Row>(text: string, values: unknown[] = []): Promise<T[]> {
       if (text.includes("INSERT INTO webhook_events")) {
         const id = String(values[0]);
+        payloads.push(String(values[3]));
         if (events.has(id)) return [] as T[]; // ON CONFLICT DO NOTHING
         events.add(id);
         return [{ event_id: id }] as unknown as T[];
       }
       return [] as T[];
     },
-    async upsert(_t, rows) {
-      actions.push(...rows);
+    async upsert(_t, rows, conflictColumns) {
+      for (const r of rows) actions.set(conflictColumns.map((c) => String(r[c])).join("|"), r);
       return rows.length;
     },
     async close() {},
   };
-  return { db, events, actions };
+  return { db, events, payloads, actions };
 }
 
 const secret = "s3cr3t-token";
@@ -79,8 +82,8 @@ describe("handlePostback", () => {
     expect(res.status).toBe(401);
   });
 
-  it("verifies, dedupes on event id, and upserts the action", async () => {
-    const { db, actions } = fakeDb();
+  it("verifies, dedupes on event id, and upserts the action idempotently", async () => {
+    const { db, actions, payloads } = fakeDb();
     const req = {
       method: "GET" as const,
       rawBody: "",
@@ -89,13 +92,26 @@ describe("handlePostback", () => {
     };
     const first = await handlePostback(req, { db, config: cfg(), logger: nullLogger });
     expect(first).toMatchObject({ status: 200, body: { ok: true, duplicate: false } });
-    expect(actions).toHaveLength(1);
-    expect(actions[0]!.id).toBe("A1");
+    expect(actions.size).toBe(1);
+    expect([...actions.values()][0]!.id).toBe("A1");
 
     // Replayed postback (same event id) must NOT double-count.
     const second = await handlePostback(req, { db, config: cfg(), logger: nullLogger });
     expect(second.body.duplicate).toBe(true);
-    expect(actions).toHaveLength(1);
+    expect(actions.size).toBe(1);
+
+    // The shared-secret token must NEVER be persisted to webhook_events.payload.
+    expect(payloads.every((p) => !p.includes(secret))).toBe(true);
+  });
+
+  it("hashes an email macro before persisting it", async () => {
+    const { db, payloads } = fakeDb();
+    await handlePostback(
+      { method: "GET", rawBody: "", headers: {}, query: { ActionId: "A2", CustomerEmail: "buyer@example.com", token: secret } },
+      { db, config: cfg(), logger: nullLogger },
+    );
+    expect(payloads[0]).not.toContain("buyer@example.com");
+    expect(payloads[0]).toContain('"CustomerEmail":"'); // present but hashed
   });
 
   it("acknowledges without persisting when DB=none", async () => {
@@ -105,6 +121,6 @@ describe("handlePostback", () => {
       { db, config: testConfig({ WEBHOOK_SIGNING_SECRET: secret }), logger: nullLogger },
     );
     expect(res.body).toMatchObject({ ok: true, persisted: false });
-    expect(actions).toHaveLength(0);
+    expect(actions.size).toBe(0);
   });
 });

@@ -31,6 +31,8 @@ export interface ImpactConfig {
     maxRetries: number;
     backoffBaseMs: number;
     backoffMaxMs: number;
+    /** Upper bound on how long a server `Retry-After` may block us. */
+    retryAfterMaxMs: number;
   };
   logLevel: LogLevel;
 
@@ -78,6 +80,7 @@ const EnvSchema = z.object({
   HTTP_MAX_RETRIES: numberFromEnv(5),
   HTTP_BACKOFF_BASE_MS: numberFromEnv(500),
   HTTP_BACKOFF_MAX_MS: numberFromEnv(20_000),
+  HTTP_RETRY_AFTER_MAX_MS: numberFromEnv(60_000),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).optional().default("info"),
 
   DEFERRED_POLL_INTERVAL_MS: numberFromEnv(2_000),
@@ -144,6 +147,7 @@ export function loadConfig(opts: LoadConfigOptions = {}): ImpactConfig {
       maxRetries: parsed.HTTP_MAX_RETRIES,
       backoffBaseMs: parsed.HTTP_BACKOFF_BASE_MS,
       backoffMaxMs: parsed.HTTP_BACKOFF_MAX_MS,
+      retryAfterMaxMs: parsed.HTTP_RETRY_AFTER_MAX_MS,
     },
     logLevel: parsed.LOG_LEVEL,
     deferred: {
