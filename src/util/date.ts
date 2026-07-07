@@ -4,9 +4,13 @@
  * no trailing Z). VERIFY the exact expected format per endpoint against docs.
  */
 
-/** `YYYY-MM-DDTHH:mm:ss` (UTC clock, no ms/Z). VERIFY per-endpoint expectations. */
+/**
+ * `YYYY-MM-DDTHH:mm:ssZ` — ISO-8601 with the UTC designator, no milliseconds.
+ * Confirmed against a live partner account: impact.com rejects a bare
+ * `YYYY-MM-DDTHH:mm:ss` (no zone) as an "invalid value"; it needs the `Z`.
+ */
 export function toImpactDateTime(d: Date): string {
-  return d.toISOString().replace(/\.\d{3}Z$/, "");
+  return d.toISOString().replace(/\.\d{3}Z$/, "Z");
 }
 
 /** `YYYY-MM-DD`. */

@@ -11,6 +11,7 @@ import { applySchema, buildUpsert, dedupeByConflict, type Database, type Row, ty
 import { computeDashboardMetrics } from "./metrics.js";
 import { purgeExpired } from "./retention.js";
 import { upsertActions, upsertClicks, upsertPrograms, upsertMediaProperties, upsertDeals } from "./upserts.js";
+import { rebuildDailyPerformance } from "./daily.js";
 import { handlePostback } from "../webhooks/handler.js";
 import { testConfig } from "../test-support/http-fakes.js";
 import { nullLogger } from "../client/logger.js";
@@ -171,6 +172,21 @@ describe("computeDashboardMetrics against Postgres", () => {
     const m = await computeDashboardMetrics(db, { currency: "SEK", persona: "partner" });
     expect(m.dailyTrend.length).toBeGreaterThanOrEqual(2);
     expect(m.dailyTrend.every((d) => typeof d.epc === "number")).toBe(true);
+  });
+});
+
+describe("rebuildDailyPerformance (derived trend)", () => {
+  it("aggregates actions + clicks into daily_performance", async () => {
+    const n = await rebuildDailyPerformance(db);
+    expect(n).toBeGreaterThan(0);
+    // 2026-07-01 / M1 / C1: clicks K1+K2 = 2, action A1 approved = 1 action, 100 revenue.
+    const rows = await db.query<{ clicks: number; actions: number; revenue: string }>(
+      "SELECT clicks, actions, revenue FROM daily_performance WHERE day = '2026-07-01' AND media_id = 'M1' AND campaign_id = 'C1'",
+    );
+    expect(rows).toHaveLength(1);
+    expect(Number(rows[0]!.clicks)).toBe(2);
+    expect(Number(rows[0]!.actions)).toBe(1);
+    expect(Number(rows[0]!.revenue)).toBeCloseTo(100);
   });
 });
 

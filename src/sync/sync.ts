@@ -13,11 +13,11 @@ import {
   upsertPartners,
   upsertContracts,
   upsertCatalogItems,
-  upsertDailyPerformance,
   upsertPrograms,
   upsertMediaProperties,
   upsertDeals,
 } from "./upserts.js";
+import { rebuildDailyPerformance } from "./daily.js";
 import { getWatermark, advanceWatermark } from "./watermark.js";
 import { purgeExpired } from "./retention.js";
 import { toDate } from "../util/coerce.js";
@@ -160,11 +160,10 @@ export async function runSync(client: ImpactClient, db: Database, options: SyncO
     return n;
   }, log);
 
-  // --- Daily performance (report) ------------------------------------------
-  await runStage(summary, "daily_performance", async () => {
-    const rows = await client.reports.performance({ days: options.performanceDays ?? 30 });
-    return upsertDailyPerformance(db, rows);
-  }, log);
+  // --- Daily performance (derived from synced actions + clicks) ------------
+  // Self-sufficient: avoids impact.com's report-export engine (which 500s on
+  // some custom reports). Runs after actions/clicks are in.
+  await runStage(summary, "daily_performance", () => rebuildDailyPerformance(db), log);
 
   // --- Retention purge -----------------------------------------------------
   // Run as a real stage so a purge failure surfaces in summary.stages (which the

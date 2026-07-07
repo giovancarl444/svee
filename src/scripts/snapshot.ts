@@ -30,6 +30,16 @@ async function main() {
         `revenue=${metrics.totals.revenue.toFixed(2)} ${metrics.currency} ` +
         `EPC=${metrics.totals.epc.toFixed(3)} CR=${(metrics.totals.conversionRate * 100).toFixed(2)}%`,
     );
+    const s = metrics.actionsByState;
+    console.log(
+      `states: approved=${s.approved} pending=${s.pending} reversed=${s.reversed} rejected=${s.rejected} other=${s.other}`,
+    );
+    if (metrics.totals.actions > 0 && s.approved === 0 && s.other > 0) {
+      console.log(
+        "⚠️  All actions fell into 'other' — impact.com's status vocabulary likely differs from " +
+          "APPROVED/PENDING/REVERSED/REJECTED. Share this line and I'll map it.",
+      );
+    }
   } finally {
     await db.close();
   }
