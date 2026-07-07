@@ -1,33 +1,54 @@
-import { connectors, getDb } from '@cortex/db';
-import { eq } from 'drizzle-orm';
+import { classifyBulkHeuristic, recordConnectorSync, upsertItem } from '@cortex/db';
+import { wireAdapters } from './adapters';
 import { log } from './logger';
 import { adapters } from './registry';
 
-/**
- * The ingestion loop (spec §5). For each enabled adapter, isolated so one
- * failure never breaks the others:
- *   getCheckpoint → fetchSince → normalize → upsert (dedupe) → advance → enqueue triage.
- * Phase 0: the registry is empty, so this reports and returns. The loop shape is
- * here so Phase 1 only has to register the Gmail adapter.
- */
-export async function runIngest(): Promise<void> {
-  const db = getDb();
-  const enabled = await db.select().from(connectors).where(eq(connectors.enabled, true));
-  log.info({ enabledConnectors: enabled.map((c) => c.source) }, 'ingest: starting');
+export interface IngestSummary {
+  ingested: number;
+  bulk: number;
+  duplicates: number;
+}
 
-  if (adapters.size === 0) {
-    log.info('ingest: no adapters registered yet (Phase 0 skeleton) — nothing to do');
-    return;
-  }
+/**
+ * The ingestion loop (spec §5), per registered adapter, isolated so one failure
+ * never breaks the others:
+ *   getCheckpoint → fetchSince → normalize → upsert (dedupe) → advance checkpoint.
+ * Bulk/automated mail gets a cheap heuristic classification here, before any
+ * model call (spec §6); everything else is left for the triage pass.
+ */
+export async function runIngest(): Promise<IngestSummary> {
+  wireAdapters();
+  const summary: IngestSummary = { ingested: 0, bulk: 0, duplicates: 0 };
 
   for (const [source, adapter] of adapters) {
     try {
       const checkpoint = await adapter.getCheckpoint();
       const raw = await adapter.fetchSince(checkpoint);
-      log.info({ source, fetched: raw.length }, 'ingest: fetched (normalize/upsert wired in Phase 1)');
-      // Phase 1: normalize → upsert on (source, source_item_id) → advance checkpoint → enqueue triage.
+
+      for (const r of raw) {
+        const normalized = adapter.normalize(r);
+        const { itemId, isNew } = await upsertItem(normalized);
+        if (!isNew || !itemId) {
+          summary.duplicates++;
+          continue;
+        }
+        summary.ingested++;
+        if (normalized.bulk) {
+          await classifyBulkHeuristic(itemId);
+          summary.bulk++;
+        }
+      }
+
+      // Advance the checkpoint only now that items are persisted (getCheckpoint
+      // returns the pending cursor computed during fetchSince).
+      await adapter.setCheckpoint(await adapter.getCheckpoint());
+      await recordConnectorSync(source, { lastSyncAt: new Date(), lastError: null, enabled: true });
+      log.info({ source, fetched: raw.length, ...summary }, 'ingest: connector done');
     } catch (err) {
-      log.error({ source, err }, 'ingest: adapter failed — isolated, other connectors continue');
+      await recordConnectorSync(source, { lastError: (err as Error).message }).catch(() => {});
+      log.error({ source, err }, 'ingest: connector failed — isolated, others continue');
     }
   }
+
+  return summary;
 }

@@ -14,3 +14,4 @@ export {
 } from './redaction';
 export { writeApiCall, type ApiCallRecord } from './audit';
 export { structuredCall, type StructuredCall, type StructuredResult } from './client';
+export { classifyTriage, shouldEscalate, type TriageResult } from './triage';

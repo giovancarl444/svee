@@ -2,14 +2,18 @@ import 'server-only';
 import {
   apiCalls,
   briefs,
-  classifications,
   connectors,
   entities,
   getDb,
   items,
+  mapPriorityRows,
   openLoops,
+  PRIORITY_ROLLUP_SQL,
+  type PriorityRow,
 } from '@cortex/db';
-import { and, desc, eq, gte, sql } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
+
+export type { PriorityRow };
 
 /**
  * Every query is wrapped so the dashboard renders cleanly even when the DB is
@@ -26,36 +30,10 @@ export async function getDbHealth(): Promise<{ ok: boolean; error?: string }> {
   }
 }
 
-export interface PriorityRow {
-  id: string;
-  source: string;
-  subject: string | null;
-  senderName: string | null;
-  urgency: number;
-  actionSummary: string;
-  timestamp: Date;
-}
-
 export async function getPriorityItems(): Promise<PriorityRow[]> {
   try {
-    // TODO(Phase 1): roll up to a thread verdict and use only the latest pass.
-    const rows = await getDb()
-      .select({
-        id: items.id,
-        source: items.source,
-        subject: items.subject,
-        senderName: entities.displayName,
-        urgency: classifications.urgency,
-        actionSummary: classifications.actionSummary,
-        timestamp: items.timestamp,
-      })
-      .from(items)
-      .innerJoin(classifications, eq(classifications.itemId, items.id))
-      .leftJoin(entities, eq(items.senderIdentity, entities.id))
-      .where(and(gte(classifications.urgency, 2), eq(classifications.requiresAction, true)))
-      .orderBy(desc(classifications.urgency), desc(items.timestamp))
-      .limit(50);
-    return rows;
+    const res = await getDb().execute(PRIORITY_ROLLUP_SQL);
+    return mapPriorityRows(res.rows as Array<Record<string, unknown>>);
   } catch {
     return [];
   }

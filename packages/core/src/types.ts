@@ -41,6 +41,12 @@ export interface NormalizedItem {
   bodySnippet?: string;
   hasAttachments: boolean;
   attachments: AttachmentMeta[];
+  /**
+   * Adapter-provided hint that this is bulk/automated mail (newsletter, no-reply,
+   * List-Unsubscribe, …). Lets the pipeline shunt it to a cheap heuristic
+   * classification before spending a model call (spec §6).
+   */
+  bulk?: boolean;
   /** The untouched source payload, kept for reprocessing. */
   raw: unknown;
 }

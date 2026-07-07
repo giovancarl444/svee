@@ -7,13 +7,18 @@
     "start": "tsx src/index.ts",
     "ingest": "tsx src/index.ts ingest",
     "triage": "tsx src/index.ts triage",
-    "synthesize": "tsx src/index.ts synthesize"
+    "sync": "tsx src/index.ts sync",
+    "synthesize": "tsx src/index.ts synthesize",
+    "gmail:auth": "tsx src/gmail-auth.ts",
+    "hash-password": "tsx src/hash-password.ts",
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "@cortex/ai": "workspace:*",
     "@cortex/config": "workspace:*",
     "@cortex/core": "workspace:*",
     "@cortex/db": "workspace:*",
+    "@cortex/gmail": "workspace:*",
     "drizzle-orm": "0.45.2",
     "pino": "10.3.1"
   }

@@ -1,7 +1,7 @@
 import { SOURCES } from '@cortex/core';
-import { getConnectors, getDbHealth, getRecentApiCalls } from '../../lib/queries';
-import { fmtDateTime } from '../../lib/format';
-import { SectionHeader } from '../components/Section';
+import { getConnectors, getDbHealth, getRecentApiCalls } from '@/lib/queries';
+import { fmtDateTime } from '@/lib/format';
+import { SectionHeader } from '@/app/components/Section';
 
 export const dynamic = 'force-dynamic';
 

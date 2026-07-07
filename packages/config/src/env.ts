@@ -42,6 +42,7 @@ const EnvSchema = z.object({
   GMAIL_CLIENT_ID: z.string().optional(),
   GMAIL_CLIENT_SECRET: z.string().optional(),
   GMAIL_REDIRECT_URI: z.string().optional(),
+  GMAIL_REFRESH_TOKEN: z.string().optional(),
   GMAIL_PUBSUB_TOPIC: z.string().optional(),
 
   // IMAP (Phase 1/3).

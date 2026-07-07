@@ -1,7 +1,7 @@
-import { getInboxItems } from '../../lib/queries';
-import { fmtDateTime } from '../../lib/format';
-import { EmptyState } from '../components/EmptyState';
-import { SectionHeader } from '../components/Section';
+import { getInboxItems } from '@/lib/queries';
+import { fmtDateTime } from '@/lib/format';
+import { EmptyState } from '@/app/components/EmptyState';
+import { SectionHeader } from '@/app/components/Section';
 
 export const dynamic = 'force-dynamic';
 
