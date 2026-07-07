@@ -5,6 +5,7 @@ import { loadLocalEnv } from '@cortex/config';
 loadLocalEnv();
 
 import { closeDb, reconcileLoops } from '@cortex/db';
+import { runDoctor } from './doctor';
 import { runEscalation } from './escalate';
 import { runIngest } from './ingest';
 import { log } from './logger';
@@ -22,7 +23,11 @@ async function main(): Promise<void> {
     return;
   }
 
+  let doctorOk = true;
   switch (command) {
+    case 'doctor':
+      doctorOk = (await runDoctor()).ok;
+      break;
     case 'ingest':
       log.info(await runIngest(), 'ingest complete');
       break;
@@ -49,10 +54,13 @@ async function main(): Promise<void> {
       break;
     case 'help':
     default:
-      log.info('CORTEX workers — commands: serve | ingest | triage | escalate | loops | sync | synthesize');
+      log.info('CORTEX workers — commands: serve | doctor | ingest | triage | escalate | loops | sync | synthesize');
       break;
   }
   await closeDb();
+  // Fail the process when a configured source is unhealthy, so `doctor` is usable
+  // as a preflight gate in scripts.
+  if (command === 'doctor' && !doctorOk) process.exit(2);
 }
 
 main().catch((err) => {

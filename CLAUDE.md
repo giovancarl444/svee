@@ -31,8 +31,8 @@ add a send path (email, WhatsApp, anything) without an explicit, gated decision.
   group); `app/login` is outside it. Reads via `lib/queries.ts`; mutations via
   Server Actions in `app/(secure)/actions.ts`.
 - `apps/workers` — the runner. `serve` = always-on scheduler; also `sync`,
-  `ingest`, `triage`, `escalate`, `synthesize`, `gmail:auth`, `outlook:auth`,
-  `hash-password`.
+  `ingest`, `triage`, `escalate`, `synthesize`, `doctor` (read-only connector
+  preflight), `gmail:auth`, `outlook:auth`, `hash-password`.
 - `packages/core` — `SourceAdapter` interface, normalized types, enum vocabulary,
   `isBulk` heuristic. The single source of truth for the controlled vocabularies.
 - `packages/db` — Drizzle schema (the spine), migrations, column encryption, and
