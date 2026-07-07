@@ -101,6 +101,34 @@ export async function getConnectors() {
   }
 }
 
+/** Everything CORTEX sent to Anthropic about one item (Constraint §2/§10, §13). */
+export async function getItemAudit(id: string) {
+  try {
+    const db = getDb();
+    const [item] = await db
+      .select({ subject: items.subject, source: items.source })
+      .from(items)
+      .where(eq(items.id, id))
+      .limit(1);
+    if (!item) return null;
+    const calls = await db
+      .select({
+        purpose: apiCalls.purpose,
+        model: apiCalls.model,
+        inputSummary: apiCalls.inputSummary,
+        tokenUsage: apiCalls.tokenUsage,
+        costEstimate: apiCalls.costEstimate,
+        createdAt: apiCalls.createdAt,
+      })
+      .from(apiCalls)
+      .where(eq(apiCalls.relatedItemId, id))
+      .orderBy(desc(apiCalls.createdAt));
+    return { subject: item.subject, source: item.source, calls };
+  } catch {
+    return null;
+  }
+}
+
 export async function getRecentApiCalls() {
   try {
     return await getDb()

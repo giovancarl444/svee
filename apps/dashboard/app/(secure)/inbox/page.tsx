@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { getInboxItems } from '@/lib/queries';
 import { fmtDateTime } from '@/lib/format';
 import { EmptyState } from '@/app/components/EmptyState';
@@ -23,13 +24,15 @@ export default async function InboxPage() {
       ) : (
         <ul>
           {rows.map((r) => (
-            <li key={r.id} className="hairline py-3">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="meta">{r.source}</span>
-                <span className="meta">{fmtDateTime(r.timestamp)}</span>
-              </div>
-              <p className="mt-1 leading-snug">{r.subject || '(no subject)'}</p>
-              <p className="meta mt-1">{r.senderName ?? 'unknown'}</p>
+            <li key={r.id} className="hairline">
+              <Link href={`/inspect/${r.id}`} className="block py-3">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="meta">{r.source}</span>
+                  <span className="meta">{fmtDateTime(r.timestamp)}</span>
+                </div>
+                <p className="mt-1 leading-snug">{r.subject || '(no subject)'}</p>
+                <p className="meta mt-1">{r.senderName ?? 'unknown'}</p>
+              </Link>
             </li>
           ))}
         </ul>

@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { getPriorityItems } from '@/lib/queries';
 import { fmtDateTime } from '@/lib/format';
 import { EmptyState } from '@/app/components/EmptyState';
@@ -21,18 +22,20 @@ export default async function TodayPage() {
       ) : (
         <ul>
           {rows.map((r) => (
-            <li key={r.id} className="hairline py-4">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="meta">{r.source}</span>
-                <span className="meta">{fmtDateTime(r.timestamp)}</span>
-              </div>
-              <p className="mt-2 font-medium leading-snug">
-                {r.actionSummary || r.subject || '(no summary)'}
-              </p>
-              <p className="meta mt-1">
-                {r.senderName ?? 'unknown'}
-                {r.urgency >= 3 ? <span className="ml-2 text-signal">· NOW</span> : null}
-              </p>
+            <li key={r.id} className="hairline">
+              <Link href={`/inspect/${r.id}`} className="block py-4">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="meta">{r.source}</span>
+                  <span className="meta">{fmtDateTime(r.timestamp)}</span>
+                </div>
+                <p className="mt-2 font-medium leading-snug">
+                  {r.actionSummary || r.subject || '(no summary)'}
+                </p>
+                <p className="meta mt-1">
+                  {r.senderName ?? 'unknown'}
+                  {r.urgency >= 3 ? <span className="ml-2 text-signal">· NOW</span> : null}
+                </p>
+              </Link>
             </li>
           ))}
         </ul>
