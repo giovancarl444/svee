@@ -21,7 +21,10 @@
     "alerts": "tsx src/scripts/alerts.ts",
     "snapshot": "tsx src/scripts/snapshot.ts",
     "gen:types": "tsx src/scripts/gen-types.ts",
-    "webhook": "tsx src/webhooks/server.ts"
+    "webhook": "tsx src/webhooks/server.ts",
+    "twin:migrate": "tsx src/scripts/twin-migrate.ts",
+    "twin:run": "tsx src/scripts/twin-run.ts",
+    "twin:score": "tsx src/scripts/twin-score.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

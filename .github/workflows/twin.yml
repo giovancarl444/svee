@@ -1,0 +1,58 @@
+name: svee-twin
+
+# The daily loop for the job-application twin. Runs stage-only by default: it does
+# 100% of the work (intake → score → tailor → stage → track → route → report) and
+# queues every irreversible action as a pending approval row. Nothing at a
+# login/submit boundary happens here — that requires an approved row + a human.
+#
+# Set repo secrets DATABASE_URL (and optionally DATABASE_PASSWORD, ANTHROPIC_API_KEY)
+# and variable DB=supabase. Add TWIN_LIVE=1 only once you've read a week of digests.
+
+on:
+  schedule:
+    - cron: "23 5 * * *" # 05:23 UTC daily
+  workflow_dispatch:
+    inputs:
+      input_file:
+        description: "Optional path to a RawListing[] JSON file in the repo"
+        required: false
+        default: ""
+
+concurrency:
+  group: svee-twin
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DB: ${{ vars.DB || 'supabase' }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      TWIN_THRESHOLD: ${{ vars.TWIN_THRESHOLD || '68' }}
+      TWIN_SALARY_FLOOR: ${{ vars.TWIN_SALARY_FLOOR || '' }}
+      TWIN_MAX_STAGED: ${{ vars.TWIN_MAX_STAGED || '8' }}
+      TWIN_LIVE: ${{ vars.TWIN_LIVE || '0' }}
+      LOG_LEVEL: info
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - run: npm ci
+      - name: Run the twin daily loop
+        run: |
+          if [ -n "${{ github.event.inputs.input_file }}" ]; then
+            npm run twin:run -- --input "${{ github.event.inputs.input_file }}" | tee twin-output.json
+          else
+            npm run twin:run | tee twin-output.json
+          fi
+      - name: Upload run output
+        uses: actions/upload-artifact@v4
+        with:
+          name: twin-output
+          path: twin-output.json
+          if-no-files-found: ignore
