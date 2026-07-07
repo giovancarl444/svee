@@ -34,8 +34,29 @@ export interface ImapConfig {
   host: string;
   port: number;
   user: string;
-  pass: string;
+  /** Basic-auth password. Mutually exclusive with `accessToken`. */
+  pass?: string;
+  /**
+   * XOAUTH2 access token, or an async getter that returns a fresh one. Preferred
+   * where basic auth is dead — notably Outlook.com after Microsoft's 2026
+   * basic-auth cutoff (see `outlook-oauth.ts`). A getter lets the fetcher pull a
+   * just-refreshed token on each connect, since these tokens expire ~hourly.
+   */
+  accessToken?: string | (() => Promise<string>);
   mailbox?: string;
+}
+
+/** Resolve the imapflow auth block from config — password OR XOAUTH2 token. */
+export async function buildImapAuth(
+  config: ImapConfig,
+): Promise<{ user: string; pass: string } | { user: string; accessToken: string }> {
+  if (config.accessToken) {
+    const token =
+      typeof config.accessToken === 'function' ? await config.accessToken() : config.accessToken;
+    return { user: config.user, accessToken: token };
+  }
+  if (config.pass) return { user: config.user, pass: config.pass };
+  throw new Error('IMAP config needs either `pass` (basic auth) or `accessToken` (XOAUTH2).');
 }
 
 function headerMapFrom(headerLines: ReadonlyArray<{ key: string; line: string }>): Map<string, string> {
@@ -80,18 +101,18 @@ async function parseSource(uid: number, source: Buffer): Promise<ParsedImapMessa
 /** Real fetcher backed by imapflow + mailparser. */
 export function makeImapFetcher(config: ImapConfig): ImapFetcher {
   const mailbox = config.mailbox ?? 'INBOX';
-  const connect = () =>
+  const connect = async () =>
     new ImapFlow({
       host: config.host,
       port: config.port,
       secure: true,
-      auth: { user: config.user, pass: config.pass },
+      auth: await buildImapAuth(config),
       logger: false,
     });
 
   return {
     async drainNew(cp) {
-      const client = connect();
+      const client = await connect();
       await client.connect();
       const messages: ParsedImapMessage[] = [];
       let next: ImapCheckpoint = { ...cp };
@@ -125,8 +146,8 @@ export function makeImapFetcher(config: ImapConfig): ImapFetcher {
     },
 
     async status() {
-      const client = connect();
       try {
+        const client = await connect();
         await client.connect();
         await client.logout();
         return { connected: true, authValid: true, detail: config.user };

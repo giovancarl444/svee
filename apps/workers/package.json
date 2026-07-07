@@ -11,6 +11,7 @@
     "sync": "tsx src/index.ts sync",
     "synthesize": "tsx src/index.ts synthesize",
     "gmail:auth": "tsx src/gmail-auth.ts",
+    "outlook:auth": "tsx src/outlook-auth.ts",
     "hash-password": "tsx src/hash-password.ts",
     "test": "vitest run --passWithNoTests"
   },

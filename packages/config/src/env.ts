@@ -57,11 +57,20 @@ const EnvSchema = z.object({
   GMAIL_REFRESH_TOKEN: z.string().optional(),
   GMAIL_PUBSUB_TOPIC: z.string().optional(),
 
-  // IMAP (Phase 1/3).
+  // IMAP (Phase 1/3) — generic password-auth mailbox.
   IMAP_HOST: z.string().optional(),
   IMAP_PORT: z.coerce.number().int().default(993),
   IMAP_USER: z.string().optional(),
   IMAP_PASSWORD: z.string().optional(),
+
+  // Outlook.com / Microsoft 365 — IMAP over OAuth (basic auth is dead in 2026).
+  // Registered in the same single non-Gmail IMAP slot; preferred over IMAP_* when set.
+  OUTLOOK_CLIENT_ID: z.string().optional(),
+  OUTLOOK_CLIENT_SECRET: z.string().optional(),
+  OUTLOOK_REDIRECT_URI: z.string().optional(),
+  OUTLOOK_REFRESH_TOKEN: z.string().optional(),
+  OUTLOOK_USER: z.string().optional(),
+  OUTLOOK_TENANT: z.string().default('common'),
 
   // Calendar (Phase 3).
   GOOGLE_CALENDAR_ID: z.string().default('primary'),
