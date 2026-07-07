@@ -36,10 +36,14 @@ async function fetchJson(url: string, timeoutMs = 15_000): Promise<unknown> {
     const timer = setTimeout(() => ctrl.abort(), timeoutMs);
     try {
       const res = await fetch(url, { signal: ctrl.signal, headers: { accept: "application/json" } });
-      if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-      return await res.json();
+      if (res.ok) return await res.json();
+      // Client errors (bad board token, 404) are not transient — fail fast.
+      if (res.status >= 400 && res.status < 500) throw new Error(`HTTP ${res.status} for ${url}`);
+      lastErr = new Error(`HTTP ${res.status} for ${url}`); // 5xx → retry
     } catch (err) {
       lastErr = err;
+      // Propagate a non-retryable 4xx immediately; retry network errors.
+      if (err instanceof Error && /^HTTP 4\d\d/.test(err.message)) throw err;
     } finally {
       clearTimeout(timer);
     }

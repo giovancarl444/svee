@@ -82,6 +82,20 @@ describe("greenhouseFetcher", () => {
     expect(await greenhouseFetcher(src({ query: "not-a-board" }))).toEqual([]);
     expect(spy).not.toHaveBeenCalled();
   });
+
+  it("fails fast on a 4xx (a bad token isn't retried)", async () => {
+    const spy = vi.fn(async () => ({ ok: false, status: 404, json: async () => ({}) }));
+    vi.stubGlobal("fetch", spy);
+    await expect(greenhouseFetcher(src({ query: "greenhouse:bad-token" }))).rejects.toThrow(/404/);
+    expect(spy).toHaveBeenCalledTimes(1); // no pointless retry
+  });
+
+  it("retries a 5xx once", async () => {
+    const spy = vi.fn(async () => ({ ok: false, status: 503, json: async () => ({}) }));
+    vi.stubGlobal("fetch", spy);
+    await expect(greenhouseFetcher(src({ query: "greenhouse:acme" }))).rejects.toThrow(/503/);
+    expect(spy).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe("leverFetcher", () => {
