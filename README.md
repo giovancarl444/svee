@@ -8,11 +8,11 @@ deadlines, and writes a blunt "what to do tomorrow" brief each evening.
 Private, single-user, **self-hosted-first**. Not a SaaS. Optimized for the
 operator's leverage and privacy — not scale.
 
-> **Status — Phase 4 (WhatsApp) complete.** Five sources share one spine — Gmail,
-> IMAP, Google Calendar, and a read-only WhatsApp bridge — with cost-routed
-> Haiku→Sonnet→Opus intelligence, open-loop tracking, the nightly Tomorrow Plan,
-> and a per-item audit inspector. Only Phase-5 polish remains. See
-> [build phases](#build-phases).
+> **Status — V1 complete (Phases 0–5).** Five read-only sources (Gmail, IMAP,
+> Google Calendar, WhatsApp) on one encrypted spine; cost-routed Haiku→Sonnet→Opus
+> triage; open-loop tracking; the nightly Opus Tomorrow Plan; snooze/done with
+> importance learning; and a per-item "what left the box" audit inspector. Add
+> credentials to run it on your real data. See [build phases](#build-phases).
 
 ---
 
@@ -110,7 +110,7 @@ pnpm typecheck && pnpm test   # full workspace check
 | **2 — The brief** | Open-loop tracking + nightly Opus Tomorrow Plan + Tomorrow view | ✅ **done** |
 | **3 — Breadth** | IMAP + Calendar adapters, entity unification, Tier-2 Sonnet escalation | ✅ **done** |
 | **4 — WhatsApp** | Isolated, read-only whatsmeow bridge + adapter (burner number) | ✅ **done** |
-| 5 — Polish | Bulk heuristics, importance learning, notifications, audit panel | — |
+| **5 — Polish** | Bulk heuristics, snooze/done + importance learning, per-item audit inspector | ✅ **done** |
 
 ## What "Phase 0 done" means here
 

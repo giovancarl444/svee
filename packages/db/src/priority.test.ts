@@ -46,6 +46,16 @@ describe('priority rollup', () => {
     const C = await mkItem('C', thread!.id, new Date('2026-07-03'));
     const D = await mkItem('D', thread!.id, new Date('2026-07-04'));
 
+    // E and F are urgency-3 but excluded by operator actions (done / snoozed).
+    const [E] = await db
+      .insert(schema.items)
+      .values({ source: 'gmail', sourceItemId: 'E', direction: 'inbound', senderIdentity: entity!.id, timestamp: new Date('2026-07-05'), subject: 'E', raw: {}, doneAt: new Date() })
+      .returning({ id: schema.items.id });
+    const [F] = await db
+      .insert(schema.items)
+      .values({ source: 'gmail', sourceItemId: 'F', direction: 'inbound', senderIdentity: entity!.id, timestamp: new Date('2026-07-06'), subject: 'F', raw: {}, snoozedUntil: new Date(Date.now() + 24 * 60 * 60 * 1000) })
+      .returning({ id: schema.items.id });
+
     const cls = (itemId: string, urgency: number, createdAt: Date) =>
       db.insert(schema.classifications).values({
         itemId,
@@ -66,6 +76,9 @@ describe('priority rollup', () => {
     // C & D share a thread at urgency 2 → dedupe to D (newer item timestamp).
     await cls(C, 2, new Date('2026-07-03T10:00:00Z'));
     await cls(D, 2, new Date('2026-07-04T10:00:00Z'));
+    // E (done) and F (snoozed) are urgency 3 but must NOT appear.
+    await cls(E!.id, 3, new Date('2026-07-05T10:00:00Z'));
+    await cls(F!.id, 3, new Date('2026-07-06T10:00:00Z'));
 
     const res = await db.execute(PRIORITY_ROLLUP_SQL);
     const rows = mapPriorityRows(res.rows as Array<Record<string, unknown>>);

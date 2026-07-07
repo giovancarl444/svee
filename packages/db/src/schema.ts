@@ -98,6 +98,9 @@ export const items = pgTable(
     /** Untouched source payload, for reprocessing. */
     raw: jsonb('raw').$type<unknown>().notNull(),
     ingestedAt: ts('ingested_at').notNull().defaultNow(),
+    /** Operator actions on the Priority view (spec §9). */
+    snoozedUntil: ts('snoozed_until'),
+    doneAt: ts('done_at'),
   },
   (t) => [
     uniqueIndex('items_source_item_uq').on(t.source, t.sourceItemId),

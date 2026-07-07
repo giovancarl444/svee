@@ -2,8 +2,11 @@ import Link from 'next/link';
 import { getItemAudit } from '@/lib/queries';
 import { fmtDateTime } from '@/lib/format';
 import { SectionHeader } from '@/app/components/Section';
+import { importanceAction } from '../../actions';
 
 export const dynamic = 'force-dynamic';
+
+const IMPORTANCE_LABEL = ['mute', 'normal', 'important', 'VIP'];
 
 export default async function InspectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -16,6 +19,30 @@ export default async function InspectPage({ params }: { params: Promise<{ id: st
       <Link href="/" className="tab-index hover:text-ink">
         ← back
       </Link>
+
+      {audit?.senderId ? (
+        <section className="hairline mt-4 pt-4">
+          <div className="flex items-baseline justify-between">
+            <span className="meta">sender · {audit.senderName ?? 'unknown'}</span>
+            <span className="meta">importance: {IMPORTANCE_LABEL[audit.senderImportance ?? 1]}</span>
+          </div>
+          <div className="mt-2 flex gap-3">
+            {[0, 1, 2, 3].map((lvl) => (
+              <form action={importanceAction} key={lvl}>
+                <input type="hidden" name="entityId" value={audit.senderId ?? ''} />
+                <input type="hidden" name="itemId" value={id} />
+                <input type="hidden" name="importance" value={lvl} />
+                <button
+                  type="submit"
+                  className={`tab-index hover:text-ink ${lvl === (audit.senderImportance ?? 1) ? 'text-ink' : ''}`}
+                >
+                  {IMPORTANCE_LABEL[lvl]}
+                </button>
+              </form>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {!audit || audit.calls.length === 0 ? (
         <p className="editorial mt-8 text-xl text-ink/70">Nothing was sent to Anthropic about this item.</p>

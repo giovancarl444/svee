@@ -43,3 +43,7 @@ Thumbs.db
 .vscode/
 *.swp
 *.log
+
+# Local scratch drive scripts (never commit)
+scratch-*.ts
+.scratch*

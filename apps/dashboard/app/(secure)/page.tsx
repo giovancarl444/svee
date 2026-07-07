@@ -3,6 +3,7 @@ import { getPriorityItems } from '@/lib/queries';
 import { fmtDateTime } from '@/lib/format';
 import { EmptyState } from '@/app/components/EmptyState';
 import { SectionHeader } from '@/app/components/Section';
+import { doneAction, snoozeAction } from './actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +24,7 @@ export default async function TodayPage() {
         <ul>
           {rows.map((r) => (
             <li key={r.id} className="hairline">
-              <Link href={`/inspect/${r.id}`} className="block py-4">
+              <Link href={`/inspect/${r.id}`} className="block pt-4">
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="meta">{r.source}</span>
                   <span className="meta">{fmtDateTime(r.timestamp)}</span>
@@ -36,6 +37,21 @@ export default async function TodayPage() {
                   {r.urgency >= 3 ? <span className="ml-2 text-signal">· NOW</span> : null}
                 </p>
               </Link>
+              <div className="flex gap-4 pt-2 pb-4">
+                <form action={doneAction}>
+                  <input type="hidden" name="id" value={r.id} />
+                  <button type="submit" className="tab-index hover:text-ink">
+                    ✓ done
+                  </button>
+                </form>
+                <form action={snoozeAction}>
+                  <input type="hidden" name="id" value={r.id} />
+                  <input type="hidden" name="hours" value="24" />
+                  <button type="submit" className="tab-index hover:text-ink">
+                    ⤓ snooze 1d
+                  </button>
+                </form>
+              </div>
             </li>
           ))}
         </ul>

@@ -106,8 +106,15 @@ export async function getItemAudit(id: string) {
   try {
     const db = getDb();
     const [item] = await db
-      .select({ subject: items.subject, source: items.source })
+      .select({
+        subject: items.subject,
+        source: items.source,
+        senderId: items.senderIdentity,
+        senderName: entities.displayName,
+        senderImportance: entities.importance,
+      })
       .from(items)
+      .leftJoin(entities, eq(items.senderIdentity, entities.id))
       .where(eq(items.id, id))
       .limit(1);
     if (!item) return null;
@@ -123,7 +130,14 @@ export async function getItemAudit(id: string) {
       .from(apiCalls)
       .where(eq(apiCalls.relatedItemId, id))
       .orderBy(desc(apiCalls.createdAt));
-    return { subject: item.subject, source: item.source, calls };
+    return {
+      subject: item.subject,
+      source: item.source,
+      senderId: item.senderId,
+      senderName: item.senderName,
+      senderImportance: item.senderImportance,
+      calls,
+    };
   } catch {
     return null;
   }

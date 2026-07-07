@@ -210,6 +210,8 @@ export const PRIORITY_ROLLUP_SQL: SQL = sql`
     join latest l on l.item_id = i.id
     left join entities e on e.id = i.sender_identity
     where l.requires_action = true and l.urgency >= 2
+      and i.done_at is null
+      and (i.snoozed_until is null or i.snoozed_until <= now())
   ),
   per_thread as (
     select distinct on (thread_key) *
@@ -504,4 +506,36 @@ export async function classifySchedulingHeuristic(itemId: string): Promise<void>
     confidence: 1,
     reasoning: 'calendar event',
   });
+}
+
+// --- Operator actions on items + importance learning (spec §9) ---------------
+export async function snoozeItem(id: string, until: Date): Promise<void> {
+  await getDb().update(items).set({ snoozedUntil: until, doneAt: null }).where(eq(items.id, id));
+}
+
+export async function reopenItem(id: string): Promise<void> {
+  await getDb().update(items).set({ doneAt: null, snoozedUntil: null }).where(eq(items.id, id));
+}
+
+/**
+ * Mark an item handled. Importance learning: engaging with an item is a signal
+ * that its sender matters, so nudge the sender's importance up one notch (never
+ * past 'important' automatically — VIP stays a manual choice).
+ */
+export async function markItemDone(id: string): Promise<void> {
+  const db = getDb();
+  await db.update(items).set({ doneAt: new Date() }).where(eq(items.id, id));
+  await db.execute(sql`
+    update entities set importance = importance + 1, updated_at = now()
+    where importance < 2
+      and id = (select sender_identity from items where id = ${id})
+  `);
+}
+
+export async function setEntityImportance(entityId: string, importance: number): Promise<void> {
+  const clamped = Math.max(0, Math.min(3, Math.round(importance)));
+  await getDb()
+    .update(entities)
+    .set({ importance: clamped, updatedAt: new Date() })
+    .where(eq(entities.id, entityId));
 }

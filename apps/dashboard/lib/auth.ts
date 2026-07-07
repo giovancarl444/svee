@@ -12,3 +12,9 @@ export async function getSession(): Promise<Session | null> {
   const store = await cookies();
   return verifySession(store.get(SESSION_COOKIE)?.value);
 }
+
+/** Guard for Server Actions (mutations) — throws if auth is on and absent. */
+export async function requireOperator(): Promise<void> {
+  if (!authConfigured()) return;
+  if (!(await getSession())) throw new Error('unauthorized');
+}
