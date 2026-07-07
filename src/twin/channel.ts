@@ -33,8 +33,12 @@ export function detectAtsVendor(url: string): AtsVendor | undefined {
   return undefined;
 }
 
-export function selectChannel(facts: RoleFacts): ChannelDecision {
+export function selectChannel(
+  facts: RoleFacts,
+  opts: { emailProvider?: "gmail" | "outlook" } = {},
+): ChannelDecision {
   const vendor = facts.atsVendor ?? detectAtsVendor(facts.url);
+  const provider = opts.emailProvider ?? "gmail";
 
   switch (facts.applyMethod) {
     case "ats":
@@ -47,11 +51,11 @@ export function selectChannel(facts: RoleFacts): ChannelDecision {
       };
     case "email":
       return {
-        channel: "email",
+        channel: `email:${provider}`,
         approvalType: "send_email",
         note: facts.applyEmail
-          ? `Draft the email to ${facts.applyEmail} with the CV variant attached.`
-          : "Draft the application email with the CV variant attached (address TBD).",
+          ? `Draft the email (${provider}) to ${facts.applyEmail} with the CV variant attached.`
+          : `Draft the application email (${provider}) with the CV variant attached (address TBD).`,
       };
     case "linkedin_easy_apply":
       return {

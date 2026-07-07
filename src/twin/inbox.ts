@@ -8,6 +8,7 @@
  * pure, so it's fully unit-tested.
  */
 import type { AlertPriority } from "./contracts.js";
+import type { MessageChannelKind } from "./channels.js";
 
 export type ReplyKind =
   | "rejection"
@@ -27,6 +28,8 @@ export interface InboundMessage {
   applicationId?: string;
   company?: string;
   role?: string;
+  /** Which channel this arrived on (a reply goes back on the same channel). */
+  via?: MessageChannelKind;
 }
 
 export interface ReplyClassification {

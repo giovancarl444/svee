@@ -79,8 +79,10 @@ a lot of the filtering.
 | Automatic intake from watched ATS boards (Greenhouse + Lever public JSON) | ✅ shipped — opt-in `twin:run --fetch`; mocked-fetch tests |
 | Live LLM drafting (`AnthropicLlm`) | ⚙️ wired — needs `npm install @anthropic-ai/sdk` + `ANTHROPIC_API_KEY` |
 | Ashby / Teamtailor / job-board fetchers | ⚙️ seam only — add a `BoardFetcher` (see `sources/fetchers.ts`) |
-| Gmail inbox ingestion | ⚙️ feed `--inbox <file.json>`; wire the Gmail read to produce `InboundMessage[]` |
-| The approval *tap* + final executor | ⚙️ Cortex integration point — flip `twin_approvals.status`, then run `guardExecution` |
+| Channel readiness across all surfaces (ATS · Gmail · Outlook · LinkedIn Easy Apply/DM · WhatsApp) | ✅ shipped — `channels.ts` taxonomy + `twin:channels` matrix; the twin prepares every channel to the last click |
+| The **Sphere** executor contract | ✅ shipped — `sphere.ts` (`SphereExecutor`, `ExecutionPlan`, `planFromApproval`); `StagingSphere` is inert (no creds, never sends) |
+| Gmail/Outlook inbox ingestion | ⚙️ feed `--inbox <file.json>`; wire the mailbox read to produce `InboundMessage[]` (carry `via` for reply-on-same-channel) |
+| Sphere itself (the credentialed executor that performs the approved final action) | ⚙️ your engine — implement `SphereExecutor.execute(plan, {approved, live})` and wire it to the approval tap |
 
 The library never scrapes behind logins and never auto-submits — those are, by
 design, human/Cortex responsibilities.
@@ -125,7 +127,27 @@ Jägarsoldat application affects availability answers) and set `TWIN_SALARY_FLOO
 queue — the safety model) · `twin_digests` (daily reports) · `twin_kb`
 (versioned KB snapshots). All idempotent on natural keys.
 
-## 8. Guardrails summary
+## 8. Channels & the Sphere boundary
+
+The engine is "ready" across every channel — but ready to **prepare**, not to send.
+
+- `channels.ts` enumerates all surfaces (`ChannelId`): ATS (greenhouse/lever/ashby/
+  teamtailor/workday), company page, `email:gmail`/`email:outlook`, LinkedIn Easy
+  Apply / external, LinkedIn DM, WhatsApp. `channelReadiness()` (see
+  `npm run twin:channels`) is the matrix of what the twin prepares and what Sphere
+  executes per channel.
+- `sphere.ts` is the contract your engine plugs into. The twin emits a typed
+  `ExecutionPlan` per approved action (`planFromApproval`); **Sphere** — the
+  approved executor holding the credentials — is the ONLY thing that performs the
+  final submit/send/login, and ONLY for an approved plan. Wiring Sphere is a
+  one-file drop-in: implement `SphereExecutor.execute(plan, {approved, live})`.
+- `StagingSphere` is the deliberately inert default: no credentials, never sends —
+  even approved + live it returns a handoff. That's the belt to the prompt's
+  suspenders. **Autonomous login/submit/send is never built into the twin**
+  (LinkedIn/WhatsApp automation violates ToS and risks a permanent ban); the whole
+  design routes those to Sphere on a human tap.
+
+## 9. Guardrails summary
 
 The twin does everything up to the last click. Credentials, account creation,
 final submit, accepting terms, and sending messages always route to Svee. Truth

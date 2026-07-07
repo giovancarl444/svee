@@ -149,6 +149,7 @@ src/twin/
 | `npm run twin:migrate` | Apply the twin schema + snapshot the KB (needs a DB) |
 | `npm run twin:run -- --input f.json --inbox g.json` | The daily loop: intake → score → tailor → stage → track → route → report |
 | `npm run twin:run -- --fetch` | Also auto-pull from watched Greenhouse/Lever boards (public JSON; set tokens in the KB `sources`) |
+| `npm run twin:channels` | Print the channel-readiness matrix (ATS · Gmail · Outlook · LinkedIn · WhatsApp) and what Sphere executes per channel |
 
 `twin:run` emits one JSON `TwinRunOutput` on stdout and a human summary on
 stderr. Default is **stage-only** (`TWIN_LIVE=0`): it stages everything and
@@ -164,6 +165,14 @@ queues each hard-stop as a pending approval. `--live` only ever hands off an
   (prompt), and the executor has no credentials and no submit path (code). See
   **[docs/TWIN_NOTES.md](docs/TWIN_NOTES.md)** for the full runbook, tuning knobs,
   and first-run checklist.
+
+**Channels & Sphere.** The engine is *ready across every surface* — ATS, Gmail,
+Outlook, LinkedIn (Easy Apply + DM), WhatsApp — but ready to **prepare to the last
+click**, not to send. `channels.ts` is the taxonomy (`npm run twin:channels` prints
+the matrix); `sphere.ts` is the contract your engine plugs into — the twin emits a
+typed `ExecutionPlan` per approved action and **Sphere** (the credentialed executor)
+performs the final submit/send on a human tap. Autonomous login/submit/send is never
+built into the twin — that's the boundary that keeps the accounts safe.
 
 ## Deploy (twin)
 

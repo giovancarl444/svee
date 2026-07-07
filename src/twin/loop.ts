@@ -23,6 +23,7 @@ import { TwinRunOutputSchema } from "./contracts.js";
 import { jobKey, type RoleFacts } from "./facts.js";
 import { scoreRole, type ScoreResult } from "./scoring.js";
 import { selectChannel } from "./channel.js";
+import { resolveMessageChannel } from "./channels.js";
 import { actionOnApprove, detectInstructionInjection } from "./guardrails.js";
 import { buildScreeningAnswers, draftCoverLetter, pickCvVariant } from "./tailor.js";
 import { classifyReply, isSwedish, type InboundMessage } from "./inbox.js";
@@ -142,7 +143,7 @@ export async function runTwin(input: TwinRunInput): Promise<TwinRunOutput> {
   // ── STEP 3+4 — TAILOR + STAGE (top passing, capped) ────────────────────────
   const topMatches: Digest["top_matches"] = [];
   for (const { facts, result } of toStage) {
-    const channel = selectChannel(facts);
+    const channel = selectChannel(facts, { emailProvider: config.emailProvider });
     const cvVariant = pickCvVariant(facts, kb);
     const screening = buildScreeningAnswers(facts, kb);
     const cover = await draftCoverLetter(facts, kb, { llm: input.llm, systemPrompt });
@@ -332,13 +333,14 @@ export async function runTwin(input: TwinRunInput): Promise<TwinRunOutput> {
       continue;
     }
     const approvalId = idGen();
+    const mc = resolveMessageChannel(undefined, config, "send_followup");
     approvals.push({
       id: approvalId,
       type: "send_followup",
       company: f.company,
       role: f.role,
       url: "",
-      channel: f.channel,
+      channel: mc.id,
       cv_variant: null,
       cover_letter:
         `Following up on my application for ${f.role} at ${f.company} (${f.daysWaiting} days ago) — ` +
@@ -346,7 +348,7 @@ export async function runTwin(input: TwinRunInput): Promise<TwinRunOutput> {
       screening_answers: [],
       missing_fields: [],
       fit_score: 0,
-      action_on_approve: actionOnApprove("send_followup", f.channel),
+      action_on_approve: mc.handoff,
     });
     alerts.push({
       priority: "normal",

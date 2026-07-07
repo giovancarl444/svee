@@ -37,6 +37,10 @@ export interface TwinConfig {
   kbPath: string | undefined;
   /** Follow-up nudge delay for high-fit, no-reply applications (days). */
   followUpAfterDays: number;
+  /** Which of Svee's mailboxes email applications/replies are staged for. */
+  emailProvider: "gmail" | "outlook";
+  /** Default channel for recruiter messages/follow-ups (reply-on-same-channel wins). */
+  messageChannel: "email" | "linkedin" | "whatsapp";
   db: {
     driver: "supabase" | "postgres" | "none";
     url: string | undefined;
@@ -68,6 +72,8 @@ const EnvSchema = z.object({
   TWIN_FOLLOWUP_DAYS: numberFromEnv(7),
   ANTHROPIC_API_KEY: z.string().optional(),
   TWIN_KB_PATH: z.string().optional(),
+  TWIN_EMAIL_PROVIDER: z.enum(["gmail", "outlook"]).optional().default("gmail"),
+  TWIN_MESSAGE_CHANNEL: z.enum(["email", "linkedin", "whatsapp"]).optional().default("email"),
 
   // Per-weight overrides (all optional; default to the rubric).
   TWIN_W_SKILLS: numberFromEnv(DEFAULT_WEIGHTS.skills),
@@ -134,6 +140,8 @@ export function loadTwinConfig(opts: LoadTwinConfigOptions = {}): TwinConfig {
     anthropicApiKey: p.ANTHROPIC_API_KEY?.trim() || undefined,
     kbPath: p.TWIN_KB_PATH?.trim() || undefined,
     followUpAfterDays: p.TWIN_FOLLOWUP_DAYS,
+    emailProvider: p.TWIN_EMAIL_PROVIDER,
+    messageChannel: p.TWIN_MESSAGE_CHANNEL,
     db: {
       driver: p.DB,
       url: p.DATABASE_URL,

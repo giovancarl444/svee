@@ -23,6 +23,19 @@ export type { ScoreResult, ScoreBreakdown, ScoringWeights, Tier, FamilyBucket } 
 export { selectChannel, detectAtsVendor } from "./channel.js";
 export type { ChannelDecision } from "./channel.js";
 
+export { resolveMessageChannel, channelReadiness } from "./channels.js";
+export type {
+  ChannelId,
+  ChannelLayer,
+  EmailProvider,
+  MessageChannelKind,
+  ChannelReadiness,
+  ResolvedMessageChannel,
+} from "./channels.js";
+
+export { StagingSphere, planFromApproval } from "./sphere.js";
+export type { SphereExecutor, ExecutionPlan, SphereContext, ExecutionResult } from "./sphere.js";
+
 export {
   HARD_STOP_ACTIONS,
   AUTONOMOUS_SAFE,
