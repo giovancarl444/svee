@@ -23,6 +23,7 @@ jobs:
       IMPACT_PERSONA: ${{ vars.IMPACT_PERSONA || 'brand' }}
       DB: ${{ vars.DB || 'supabase' }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
       DEFAULT_CURRENCY: ${{ vars.DEFAULT_CURRENCY || 'SEK' }}
       DEFAULT_TIMEZONE: ${{ vars.DEFAULT_TIMEZONE || 'Europe/Stockholm' }}
       LOG_LEVEL: info
