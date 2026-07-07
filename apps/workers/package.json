@@ -13,7 +13,9 @@
     "doctor": "tsx src/index.ts doctor",
     "benchmark": "tsx src/demo/benchmark.ts",
     "gmail:auth": "tsx src/gmail-auth.ts",
+    "connect:gmail": "tsx src/gmail-auth.ts",
     "outlook:auth": "tsx src/outlook-auth.ts",
+    "connect:outlook": "tsx src/outlook-auth.ts",
     "hash-password": "tsx src/hash-password.ts",
     "test": "vitest run --passWithNoTests"
   },

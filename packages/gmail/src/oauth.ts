@@ -6,19 +6,20 @@ type OAuth2Client = InstanceType<typeof google.auth.OAuth2>;
 // Read-only (Constraint §6). gmail.readonly is the minimum scope for bodies.
 export const GMAIL_SCOPES = ['https://www.googleapis.com/auth/gmail.readonly'];
 
-function requireOAuthEnv() {
+/**
+ * Build the OAuth client. `redirectOverride` lets the loopback auto-capture flow
+ * supply a `http://127.0.0.1:<port>` redirect at runtime — so a Google "Desktop
+ * app" client works with no pre-registered redirect URI. Falls back to
+ * GMAIL_REDIRECT_URI (the manual/Web-client path). The redirect is only used by
+ * the one-time consent exchange; refresh-token use (authedClient) doesn't need it.
+ */
+export function makeOAuthClient(redirectOverride?: string): OAuth2Client {
   const env = getEnv();
-  if (!env.GMAIL_CLIENT_ID || !env.GMAIL_CLIENT_SECRET || !env.GMAIL_REDIRECT_URI) {
-    throw new Error(
-      'Gmail OAuth is not configured: set GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REDIRECT_URI.',
-    );
+  if (!env.GMAIL_CLIENT_ID || !env.GMAIL_CLIENT_SECRET) {
+    throw new Error('Gmail OAuth is not configured: set GMAIL_CLIENT_ID and GMAIL_CLIENT_SECRET.');
   }
-  return env;
-}
-
-export function makeOAuthClient(): OAuth2Client {
-  const env = requireOAuthEnv();
-  return new google.auth.OAuth2(env.GMAIL_CLIENT_ID, env.GMAIL_CLIENT_SECRET, env.GMAIL_REDIRECT_URI);
+  const redirect = redirectOverride ?? env.GMAIL_REDIRECT_URI;
+  return new google.auth.OAuth2(env.GMAIL_CLIENT_ID, env.GMAIL_CLIENT_SECRET, redirect);
 }
 
 /** URL the operator visits once to grant read access (scopes default to Gmail). */

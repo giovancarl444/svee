@@ -7,7 +7,7 @@ friction always is. All credentials go in `.env` (never the repo).
 **Golden rule: after setting any source's env, run the preflight before syncing.**
 
 ```bash
-pnpm --filter @cortex/workers doctor
+pnpm --filter @cortex/workers run doctor
 ```
 
 `doctor` registers every configured source and probes each one **read-only** (auth
