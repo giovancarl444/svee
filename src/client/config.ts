@@ -44,6 +44,9 @@ export interface ImpactConfig {
   db: {
     driver: "supabase" | "postgres" | "sqlite" | "none";
     url: string | undefined;
+    /** Optional RAW password supplied separately, so nasty passwords don't need
+     *  percent-encoding in the URL. When set, omit the password from DATABASE_URL. */
+    password: string | undefined;
     supabaseUrl: string | undefined;
     supabaseServiceRoleKey: string | undefined;
     sqlitePath: string;
@@ -90,6 +93,7 @@ const EnvSchema = z.object({
 
   DB: z.enum(["supabase", "postgres", "sqlite", "none"]).optional().default("none"),
   DATABASE_URL: z.string().optional(),
+  DATABASE_PASSWORD: z.string().optional(),
   SUPABASE_URL: z.string().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
   SQLITE_PATH: z.string().optional().default("./data/impact.sqlite"),
@@ -158,6 +162,7 @@ export function loadConfig(opts: LoadConfigOptions = {}): ImpactConfig {
     db: {
       driver: parsed.DB,
       url: parsed.DATABASE_URL,
+      password: parsed.DATABASE_PASSWORD,
       supabaseUrl: parsed.SUPABASE_URL,
       supabaseServiceRoleKey: parsed.SUPABASE_SERVICE_ROLE_KEY,
       sqlitePath: parsed.SQLITE_PATH,

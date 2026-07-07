@@ -86,15 +86,24 @@ export function buildUpsert(
 export class PgDatabase implements Database {
   private pool: import("pg").Pool | undefined;
   private readonly connectionString: string;
+  private readonly password: string | undefined;
 
-  constructor(connectionString: string) {
+  constructor(connectionString: string, password?: string) {
     this.connectionString = connectionString;
+    this.password = password;
   }
 
   private async getPool(): Promise<import("pg").Pool> {
     if (!this.pool) {
       const pg = (await import("pg")).default;
-      this.pool = new pg.Pool({ connectionString: this.connectionString, max: 5 });
+      this.pool = new pg.Pool({
+        connectionString: this.connectionString,
+        // Explicit password wins over any in the URL, so a raw password with
+        // special characters needs no percent-encoding (omit it from the URL).
+        ...(this.password ? { password: this.password } : {}),
+        max: 5,
+        connectionTimeoutMillis: 15_000, // fail fast instead of hanging
+      });
     }
     return this.pool;
   }
@@ -156,7 +165,7 @@ export function createDatabase(config: ImpactConfig): Database {
         `Project Settings → Database). Set it in .env.local.`,
     );
   }
-  return new PgDatabase(url);
+  return new PgDatabase(url, config.db.password);
 }
 
 /** Apply schema.sql (idempotent). */
