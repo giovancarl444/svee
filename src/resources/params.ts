@@ -9,12 +9,14 @@
  */
 
 export const ACTION_PARAMS = {
-  startDate: "StartDate", // VERIFY (also seen: ActionDateStart)
-  endDate: "EndDate", // VERIFY (also seen: ActionDateEnd)
+  // Confirmed against a live partner account: the Actions endpoint 400s on
+  // StartDate/EndDate and expects ActionDateStart/ActionDateEnd.
+  startDate: "ActionDateStart",
+  endDate: "ActionDateEnd",
   campaignId: "CampaignId",
   mediaId: "MediaId",
   actionTrackerId: "ActionTrackerId",
-  state: "State",
+  state: "Status", // VERIFY status vocabulary from live data (PENDING/LOCKED/…)
 } as const;
 
 export const CLICK_PARAMS = {

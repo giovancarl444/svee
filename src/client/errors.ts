@@ -57,8 +57,10 @@ export class ImpactError extends Error {
   }
 
   static fromStatus(status: number, context: ImpactErrorContext): ImpactError {
+    // Surface impact.com's own error message so failures are self-explanatory.
+    const note = context.body ? ` — ${String(context.body).slice(0, 300)}` : "";
     if (status === 401) {
-      return new ImpactError("auth", "401 Unauthorized — check IMPACT_ACCOUNT_SID / IMPACT_AUTH_TOKEN.", {
+      return new ImpactError("auth", `401 Unauthorized — check IMPACT_ACCOUNT_SID / IMPACT_AUTH_TOKEN.${note}`, {
         ...context,
         status,
       });
@@ -66,20 +68,20 @@ export class ImpactError extends Error {
     if (status === 403) {
       return new ImpactError(
         "forbidden",
-        "403 Forbidden — wrong persona base path for these credentials, or missing scope.",
+        `403 Forbidden — wrong persona base path for these credentials, or missing scope.${note}`,
         { ...context, status },
       );
     }
     if (status === 429) {
-      return new ImpactError("rate_limited", "429 Too Many Requests — rate limited.", {
+      return new ImpactError("rate_limited", `429 Too Many Requests — rate limited.${note}`, {
         ...context,
         status,
       });
     }
     if (status >= 500) {
-      return new ImpactError("server", `${status} upstream server error.`, { ...context, status });
+      return new ImpactError("server", `${status} upstream server error.${note}`, { ...context, status });
     }
-    return new ImpactError("client", `${status} client error.`, { ...context, status });
+    return new ImpactError("client", `${status} client error.${note}`, { ...context, status });
   }
 }
 

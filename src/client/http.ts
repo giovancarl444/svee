@@ -176,7 +176,13 @@ export class HttpClient {
           await this.deps.sleep(delay);
           continue;
         }
-        this.deps.logger.error("request failed", { method, path: logPath, status: res.status, attempt });
+        this.deps.logger.error("request failed", {
+          method,
+          path: logPath,
+          status: res.status,
+          attempt,
+          body: err.context.body,
+        });
         throw err;
       } catch (rawErr) {
         cancel();

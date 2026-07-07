@@ -45,11 +45,10 @@ export class ReportsResource {
    * Run a report export by id and return its rows. Uses the deferred helper, so
    * both synchronous (small) and queued (large) reports resolve through one path.
    *
-   * VERIFY: the export path shape. Two forms exist in impact.com's API —
-   *   /{base}/Reports/{id}        (run report, paged JSON)
-   *   /{base}/ReportExport/{id}   (async export to a downloadable file)
-   * We use ReportExport for the deferred flow. Adjust here if your persona/report
-   * uses the other form.
+   * Uses /{base}/Reports/{id} (run report → JSON records). Confirmed against a
+   * live partner account that /ReportExport/{id} returns 500; the run endpoint
+   * returns data directly (the deferred helper still handles a queued response
+   * if the server chooses to defer a large report).
    */
   async runExport(reportId: string, options: RunExportOptions = {}): Promise<ReportRow[]> {
     const query: Record<string, string | number> = {
@@ -58,7 +57,7 @@ export class ReportsResource {
     };
     const result = await runDeferredExport<Record<string, unknown>>(
       this.ctx.http,
-      this.ctx.path("ReportExport", reportId),
+      this.ctx.path("Reports", reportId),
       {
         query,
         pollIntervalMs: this.ctx.config.deferred.pollIntervalMs,
