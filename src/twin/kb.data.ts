@@ -254,11 +254,19 @@ export const SVEE_KB: KnowledgeBase = {
       url: "https://wellfound.com/role/full-stack-engineer",
       query: "remote founding engineer typescript",
     },
+    // Watched company ATS boards (public JSON — fetched automatically with `--fetch`).
+    // Replace the placeholder token/company with a real board you're watching.
     {
-      name: "Teamtailor/Greenhouse/Lever/Ashby — watched company career pages",
+      name: "Watched Greenhouse board (replace token)",
       kind: "ats",
       url: "",
-      query: "typescript next.js supabase remote",
+      query: "greenhouse:your-company-token",
+    },
+    {
+      name: "Watched Lever board (replace company)",
+      kind: "ats",
+      url: "",
+      query: "lever:your-company",
     },
     {
       name: "Arbetsförmedlingen (Platsbanken)",

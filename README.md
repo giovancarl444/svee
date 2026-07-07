@@ -148,6 +148,7 @@ src/twin/
 | `npm run twin:score -- <url\|--input f.json>` | Score listings only — tune the threshold/weights, no DB, no drafting |
 | `npm run twin:migrate` | Apply the twin schema + snapshot the KB (needs a DB) |
 | `npm run twin:run -- --input f.json --inbox g.json` | The daily loop: intake → score → tailor → stage → track → route → report |
+| `npm run twin:run -- --fetch` | Also auto-pull from watched Greenhouse/Lever boards (public JSON; set tokens in the KB `sources`) |
 
 `twin:run` emits one JSON `TwinRunOutput` on stdout and a human summary on
 stderr. Default is **stage-only** (`TWIN_LIVE=0`): it stages everything and

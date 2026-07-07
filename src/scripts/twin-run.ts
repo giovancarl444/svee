@@ -20,6 +20,7 @@ import { loadKb } from "../twin/kb.js";
 import { createLlm } from "../twin/llm.js";
 import { runTwin, type FollowupDue } from "../twin/loop.js";
 import type { RawListing } from "../twin/sources/types.js";
+import { boardSource, collectListings, buildFetcher } from "../twin/sources/index.js";
 import type { InboundMessage } from "../twin/inbox.js";
 import {
   createTwinDatabase,
@@ -58,6 +59,13 @@ async function main() {
   }
   const inputFile = flagValue(argv, "--input");
   if (inputFile) listings.push(...readJson<RawListing[]>(inputFile));
+  // Automatic intake from watched ATS boards (public JSON). Opt-in so CI/offline
+  // runs stay deterministic; a dead source never sinks the run (collectListings
+  // isolates failures).
+  if (argv.includes("--fetch")) {
+    const adapters = kb.sources.map((s) => boardSource(s, buildFetcher(s)));
+    listings.push(...(await collectListings(adapters)));
+  }
   const inboxFile = flagValue(argv, "--inbox");
   const inbound: InboundMessage[] = inboxFile ? readJson<InboundMessage[]>(inboxFile) : [];
 

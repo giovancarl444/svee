@@ -76,8 +76,9 @@ a lot of the filtering.
 | The 7-step orchestrator (`runTwin`) | ✅ shipped, integration-tested |
 | CLI: `twin:migrate`, `twin:run`, `twin:score` | ✅ shipped |
 | GitHub Actions cron + Vercel read API + Cortex dashboard | ✅ shipped |
+| Automatic intake from watched ATS boards (Greenhouse + Lever public JSON) | ✅ shipped — opt-in `twin:run --fetch`; mocked-fetch tests |
 | Live LLM drafting (`AnthropicLlm`) | ⚙️ wired — needs `npm install @anthropic-ai/sdk` + `ANTHROPIC_API_KEY` |
-| Live board/ATS fetching (`boardSource` fetcher) | ⚙️ seam only — inject a fetcher; no network in this build |
+| Ashby / Teamtailor / job-board fetchers | ⚙️ seam only — add a `BoardFetcher` (see `sources/fetchers.ts`) |
 | Gmail inbox ingestion | ⚙️ feed `--inbox <file.json>`; wire the Gmail read to produce `InboundMessage[]` |
 | The approval *tap* + final executor | ⚙️ Cortex integration point — flip `twin_approvals.status`, then run `guardExecution` |
 
@@ -97,6 +98,8 @@ npm run twin:score -- --input listings.json      # RawListing[]
 # Full loop, stage-only (does all the work, persists nothing without a DB):
 npm run twin:migrate                 # apply schema + snapshot the KB (needs DB)
 npm run twin:run -- --input listings.json --inbox inbox.json
+npm run twin:run -- --fetch          # also auto-pull from watched Greenhouse/Lever boards
+                                     # (set the board tokens in the KB `sources`)
 
 # Read the digest. Fill the flagged KB slots (email, salary floor, notice…) in
 # src/twin/kb.data.ts (or point TWIN_KB_PATH at a JSON KB). Re-run for a week in
