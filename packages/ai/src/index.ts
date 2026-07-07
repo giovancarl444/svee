@@ -14,6 +14,13 @@ export {
   type SynthesisEvent,
 } from './redaction';
 export { writeApiCall, type ApiCallRecord } from './audit';
+export {
+  getProvider,
+  resetProviderCache,
+  type ModelProvider,
+  type ProviderStructuredInput,
+  type ProviderTextInput,
+} from './provider';
 export { structuredCall, textCall, type StructuredCall, type StructuredResult, type TextCall } from './client';
 export { classifyTriage, shouldEscalate, CLASSIFICATION_SCHEMA, type TriageResult } from './triage';
 export { classifyEscalate } from './escalate';

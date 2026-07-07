@@ -29,8 +29,18 @@ const EnvSchema = z.object({
   // Encryption at rest (Constraint §5). base64 of 32 bytes.
   CORTEX_ENCRYPTION_KEY: z.string().optional(),
 
-  // Anthropic — the only model egress (Constraint §4).
+  // Model provider (Constraint §4: the one configured provider is the only model
+  // egress). 'anthropic' = pinned Claude tiers; 'openai' = any OpenAI-compatible
+  // endpoint (local Ollama/Qwen3, or hosted DeepSeek/OpenRouter).
+  CORTEX_MODEL_PROVIDER: z.enum(['anthropic', 'openai']).default('anthropic'),
   ANTHROPIC_API_KEY: z.string().optional(),
+  // OpenAI-compatible provider (used when CORTEX_MODEL_PROVIDER=openai).
+  // e.g. http://localhost:11434/v1 (Ollama) or https://api.deepseek.com/v1.
+  CORTEX_OPENAI_BASE_URL: z.string().optional(),
+  // Bearer key for the endpoint above. Ollama ignores it; DeepSeek/OpenRouter need it.
+  CORTEX_OPENAI_API_KEY: z.string().optional(),
+  // Model IDs per tier. Defaults are the pinned Claude tiers; override to your
+  // chosen model when using the openai provider (e.g. qwen3 / deepseek-chat).
   CORTEX_MODEL_TRIAGE: z.string().default('claude-haiku-4-5-20251001'),
   CORTEX_MODEL_ESCALATE: z.string().default('claude-sonnet-5'),
   CORTEX_MODEL_SYNTHESIS: z.string().default('claude-opus-4-8'),
