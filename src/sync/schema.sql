@@ -60,6 +60,9 @@ CREATE TABLE IF NOT EXISTS actions (
   oid               text,                  -- impact order id
   event_date        timestamptz,
   creation_date     timestamptz,
+  subid1            text,                  -- Shopify store / placement / campaign
+  subid2            text,
+  subid3            text,
   raw               jsonb NOT NULL,
   synced_at         timestamptz NOT NULL DEFAULT now()
 );
@@ -67,6 +70,7 @@ CREATE INDEX IF NOT EXISTS idx_actions_event_date ON actions (event_date);
 CREATE INDEX IF NOT EXISTS idx_actions_media ON actions (media_id);
 CREATE INDEX IF NOT EXISTS idx_actions_state ON actions (state);
 CREATE INDEX IF NOT EXISTS idx_actions_order ON actions (order_id);
+CREATE INDEX IF NOT EXISTS idx_actions_subid1 ON actions (subid1);
 
 -- Clicks (high volume).
 CREATE TABLE IF NOT EXISTS clicks (

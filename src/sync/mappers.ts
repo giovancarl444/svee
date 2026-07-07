@@ -27,6 +27,9 @@ export function actionToRow(a: Action): Row | null {
     oid: str(a.Oid),
     event_date: toDate(a.EventDate),
     creation_date: toDate(a.CreationDate),
+    subid1: str(a.SubId1),
+    subid2: str(a.SubId2),
+    subid3: str(a.SubId3),
     raw: a,
   };
 }
