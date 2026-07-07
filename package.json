@@ -1,0 +1,37 @@
+{
+  "name": "impact-integration",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Production-grade, typed, resilient integration layer for the impact.com platform (brand/partner/agency personas).",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "persona": "tsx src/scripts/detect-persona.ts",
+    "smoke": "tsx src/scripts/smoke-test.ts",
+    "sync": "tsx src/scripts/sync.ts",
+    "backfill": "tsx src/scripts/backfill.ts",
+    "reconcile": "tsx src/scripts/reconcile.ts",
+    "alerts": "tsx src/scripts/alerts.ts",
+    "snapshot": "tsx src/scripts/snapshot.ts",
+    "gen:types": "tsx src/scripts/gen-types.ts",
+    "webhook": "tsx src/webhooks/server.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "pg": "^8.13.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "@types/pg": "^8.11.10",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}

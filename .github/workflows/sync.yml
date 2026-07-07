@@ -1,0 +1,47 @@
+name: impact-sync
+
+# Daily scheduled pull → upsert → snapshot → reconcile.
+# Mirror of the house cron pattern (also expressible as a Vercel Cron hitting the
+# Next.js route). Set the referenced secrets in repo → Settings → Secrets → Actions.
+
+on:
+  schedule:
+    - cron: "17 3 * * *" # 03:17 UTC daily (offset to avoid top-of-hour contention)
+  workflow_dispatch: {} # allow manual runs
+
+concurrency:
+  group: impact-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      IMPACT_ACCOUNT_SID: ${{ secrets.IMPACT_ACCOUNT_SID }}
+      IMPACT_AUTH_TOKEN: ${{ secrets.IMPACT_AUTH_TOKEN }}
+      IMPACT_PERSONA: ${{ vars.IMPACT_PERSONA || 'brand' }}
+      DB: ${{ vars.DB || 'supabase' }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DEFAULT_CURRENCY: ${{ vars.DEFAULT_CURRENCY || 'SEK' }}
+      DEFAULT_TIMEZONE: ${{ vars.DEFAULT_TIMEZONE || 'Europe/Stockholm' }}
+      LOG_LEVEL: info
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - run: npm ci
+      - name: Sync
+        run: npm run sync
+      - name: Snapshot dashboard metrics
+        run: npm run snapshot
+      - name: Reconcile (non-fatal — report only)
+        run: npm run reconcile || echo "::warning::reconciliation reported drift"
+      - name: Upload metrics snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics
+          path: dashboard/public/metrics.json
+          if-no-files-found: ignore

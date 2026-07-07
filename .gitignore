@@ -1,0 +1,39 @@
+# Secrets — NEVER commit real credentials
+.env
+.env.local
+.env.*.local
+*.env.local
+.mcp-auth/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Next.js (dashboard)
+dashboard/.next/
+dashboard/out/
+dashboard/node_modules/
+
+# Test / coverage
+coverage/
+.vitest/
+
+# Generated data snapshots (may contain PII-adjacent aggregates)
+dashboard/public/metrics.json
+data/exports/
+*.deferred.csv
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

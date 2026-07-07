@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>impact.com — performance</title>
+    <style>
+      :root {
+        --bg: #f7f8fa; --card: #ffffff; --ink: #12151c; --muted: #5b6472;
+        --line: #e6e9ef; --accent: #2f6fed; --pos: #1a8f5a; --neg: #d1453b;
+        --pend: #c98a12; --appr: #1a8f5a;
+        --shadow: 0 1px 2px rgba(16,22,34,.06), 0 4px 16px rgba(16,22,34,.05);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0e1116; --card: #161b22; --ink: #e8ebf0; --muted: #9aa4b2;
+          --line: #232a34; --accent: #6a9bff; --pos: #46c98a; --neg: #f0655a;
+          --pend: #e0a53a; --appr: #46c98a; --shadow: none;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; background: var(--bg); color: var(--ink);
+        font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+        -webkit-font-smoothing: antialiased; padding: env(safe-area-inset-top) 0 40px;
+      }
+      .wrap { max-width: 960px; margin: 0 auto; padding: 16px; }
+      header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; margin: 8px 2px 18px; }
+      h1 { font-size: 18px; margin: 0; font-weight: 650; letter-spacing: -.01em; }
+      .meta { color: var(--muted); font-size: 12.5px; }
+      .grid { display: grid; gap: 12px; }
+      .kpis { grid-template-columns: repeat(2, 1fr); }
+      @media (min-width: 560px) { .kpis { grid-template-columns: repeat(3, 1fr); } }
+      .card {
+        background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+        padding: 14px; box-shadow: var(--shadow);
+      }
+      .kpi .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+      .kpi .value { font-size: 24px; font-weight: 680; margin-top: 4px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+      .kpi .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+      section { margin-top: 20px; }
+      h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 2px 10px; font-weight: 600; }
+      .states { display: flex; gap: 8px; flex-wrap: wrap; }
+      .chip { border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; border: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+      .chip.pending { color: var(--pend); } .chip.approved { color: var(--appr); }
+      .chip.reversed, .chip.rejected { color: var(--neg); }
+      .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; }
+      table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 520px; }
+      th, td { text-align: right; padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
+      th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: var(--card); }
+      th { color: var(--muted); font-weight: 600; font-size: 12px; }
+      .bars { display: flex; align-items: flex-end; gap: 3px; height: 120px; padding-top: 8px; }
+      .bar { flex: 1 1 0; background: var(--accent); border-radius: 3px 3px 0 0; min-height: 2px; opacity: .85; }
+      .axis { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; margin-top: 6px; }
+      .empty { text-align: center; color: var(--muted); padding: 40px 16px; }
+      .empty code { background: var(--card); border: 1px solid var(--line); padding: 2px 6px; border-radius: 6px; }
+      a { color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>impact.com performance</h1>
+        <span class="meta" id="meta"></span>
+      </header>
+      <div id="root"></div>
+    </div>
+
+    <script>
+      const $ = (h) => { const t = document.createElement("template"); t.innerHTML = h.trim(); return t.content.firstChild; };
+      const fmtN = (n) => new Intl.NumberFormat().format(Math.round(n || 0));
+      const fmtM = (n, c) => new Intl.NumberFormat(undefined, { style: "currency", currency: c || "USD", maximumFractionDigits: 0 }).format(n || 0);
+      const fmtM2 = (n, c) => new Intl.NumberFormat(undefined, { style: "currency", currency: c || "USD", maximumFractionDigits: 2 }).format(n || 0);
+      const pct = (n) => ((n || 0) * 100).toFixed(2) + "%";
+
+      function kpi(label, value, sub) {
+        return `<div class="card kpi"><div class="label">${label}</div><div class="value">${value}</div>${sub ? `<div class="sub">${sub}</div>` : ""}</div>`;
+      }
+
+      function render(m) {
+        document.getElementById("meta").textContent =
+          `${m.currency} · generated ${new Date(m.generatedAt).toLocaleString()}`;
+        const t = m.totals, s = m.actionsByState;
+        const root = document.getElementById("root");
+
+        const kpis = `<div class="grid kpis">
+          ${kpi("Revenue (approved)", fmtM(t.revenue, m.currency))}
+          ${kpi("EPC", fmtM2(t.epc, m.currency), "earnings / click")}
+          ${kpi("Conversion rate", pct(t.conversionRate), `${fmtN(t.actions)} / ${fmtN(t.clicks)}`)}
+          ${kpi("Clicks", fmtN(t.clicks))}
+          ${kpi("Actions", fmtN(t.actions))}
+          ${kpi("Payout", fmtM(t.payout, m.currency), "commission")}
+        </div>`;
+
+        const states = `<section><h2>Actions by state</h2><div class="states">
+          <span class="chip approved">Approved ${fmtN(s.approved)}</span>
+          <span class="chip pending">Pending ${fmtN(s.pending)}</span>
+          <span class="chip reversed">Reversed ${fmtN(s.reversed)}</span>
+          <span class="chip rejected">Rejected ${fmtN(s.rejected)}</span>
+          ${s.other ? `<span class="chip">Other ${fmtN(s.other)}</span>` : ""}
+        </div></section>`;
+
+        const trend = renderTrend(m.dailyTrend, m.currency);
+
+        const aff = `<section><h2>Top affiliates by revenue</h2><div class="card scroll"><table>
+          <thead><tr><th>Partner</th><th>Revenue</th><th>Clicks</th><th>Actions</th><th>EPC</th><th>CR</th></tr></thead>
+          <tbody>${(m.topAffiliates || []).map((a) => `<tr>
+            <td>${escapeHtml(a.name || a.mediaId)}</td>
+            <td>${fmtM(a.revenue, m.currency)}</td>
+            <td>${fmtN(a.clicks)}</td>
+            <td>${fmtN(a.actions)}</td>
+            <td>${fmtM2(a.epc, m.currency)}</td>
+            <td>${pct(a.conversionRate)}</td></tr>`).join("") || `<tr><td colspan="6">No partner data yet.</td></tr>`}
+          </tbody></table></div></section>`;
+
+        const items = `<section><h2>Top catalog items</h2><div class="card scroll"><table>
+          <thead><tr><th>Item</th><th>Category</th><th>Price</th></tr></thead>
+          <tbody>${(m.topCatalogItems || []).map((i) => `<tr>
+            <td>${escapeHtml(i.name || i.id)}</td><td>${escapeHtml(i.category || "—")}</td>
+            <td>${i.price != null ? fmtM(i.price, m.currency) : "—"}</td></tr>`).join("") || `<tr><td colspan="3">No catalog data yet.</td></tr>`}
+          </tbody></table></div></section>`;
+
+        root.innerHTML = kpis + states + trend + aff + items;
+      }
+
+      function renderTrend(days, currency) {
+        if (!days || !days.length) return "";
+        const max = Math.max(...days.map((d) => d.revenue), 1);
+        const bars = days.map((d) =>
+          `<div class="bar" title="${d.day}: ${fmtM(d.revenue, currency)} · ${fmtN(d.actions)} actions" style="height:${(d.revenue / max) * 100}%"></div>`,
+        ).join("");
+        const first = days[0].day, last = days[days.length - 1].day;
+        return `<section><h2>Daily revenue trend</h2><div class="card">
+          <div class="bars">${bars}</div><div class="axis"><span>${first}</span><span>${last}</span></div></div></section>`;
+      }
+
+      function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+      function empty() {
+        document.getElementById("root").innerHTML =
+          `<div class="empty"><p>No metrics snapshot found.</p>
+           <p>Populate it with:</p>
+           <p><code>npm run sync</code> &nbsp;then&nbsp; <code>npm run snapshot</code></p>
+           <p class="meta">The snapshot writes <code>dashboard/public/metrics.json</code>, which this page reads.</p></div>`;
+      }
+
+      fetch("./metrics.json", { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : Promise.reject()))
+        .then(render)
+        .catch(empty);
+    </script>
+  </body>
+</html>
