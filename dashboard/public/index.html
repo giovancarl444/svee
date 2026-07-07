@@ -206,8 +206,11 @@
            <p class="meta">The snapshot writes <code>dashboard/public/metrics.json</code>, which this page reads.</p></div>`;
       }
 
-      fetch("./metrics.json", { cache: "no-store" })
-        .then((r) => (r.ok ? r.json() : Promise.reject()))
+      // Prefer the live serverless endpoint (Vercel /api/metrics reading the
+      // warehouse); fall back to a static snapshot for local/offline viewing.
+      const load = (url) => fetch(url, { cache: "no-store" }).then((r) => (r.ok ? r.json() : Promise.reject()));
+      load("/api/metrics")
+        .catch(() => load("./metrics.json"))
         .then(render)
         .catch(empty);
     </script>

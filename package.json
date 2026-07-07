@@ -14,6 +14,7 @@
     "test:watch": "vitest",
     "persona": "tsx src/scripts/detect-persona.ts",
     "smoke": "tsx src/scripts/smoke-test.ts",
+    "migrate": "tsx src/scripts/migrate.ts",
     "sync": "tsx src/scripts/sync.ts",
     "backfill": "tsx src/scripts/backfill.ts",
     "reconcile": "tsx src/scripts/reconcile.ts",

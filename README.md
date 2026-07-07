@@ -88,11 +88,28 @@ top catalog items ([preview](docs/dashboard-preview.png)). Deploy the folder to
 Vercel or any static host. The house-stack Next.js route version is documented inline in
 `src/webhooks/next-route.ts` and `docs/EXTENDING.md`.
 
-## Cron
+## Deploy (always-up, no PC required)
 
-`.github/workflows/sync.yml` runs `sync → snapshot → reconcile` daily. Add the
-same env as repo/Actions secrets. A Vercel Cron equivalent hits the Next.js
-route on the same schedule.
+Recommended topology:
+
+- **Supabase** — the Postgres warehouse. Apply the schema once: `npm run migrate`
+  (also auto-applied on the first `npm run sync`). Use the **transaction pooler**
+  connection string for serverless.
+- **GitHub Actions** — the scheduler. `.github/workflows/sync.yml` runs
+  `sync → snapshot → reconcile` nightly (and on demand via *Run workflow*). Add
+  repo **secrets** `IMPACT_ACCOUNT_SID`, `IMPACT_AUTH_TOKEN`, `DATABASE_URL` and
+  **variables** `IMPACT_PERSONA=partner`, `DB=supabase`.
+- **Vercel** — hosts the dashboard + live API. `vercel.json` builds the library
+  and serves `dashboard/public` statically with two functions:
+  - `GET /api/metrics` — live `DashboardMetrics` from the warehouse (the
+    dashboard fetches this, falling back to the static snapshot).
+  - `GET/POST /api/postback` — the webhook receiver.
+  Set the same env vars in Vercel (DB, DATABASE_URL, IMPACT_*, and
+  `WEBHOOK_SIGNING_SECRET` for postbacks). Point impact.com postbacks at
+  `https://<app>/api/postback?token=<WEBHOOK_SIGNING_SECRET>`.
+
+Once secrets are in, trigger the Actions workflow to populate the DB and the
+Vercel dashboard shows live numbers.
 
 ## Adding an endpoint
 
