@@ -8,12 +8,10 @@ deadlines, and writes a blunt "what to do tomorrow" brief each evening.
 Private, single-user, **self-hosted-first**. Not a SaaS. Optimized for the
 operator's leverage and privacy — not scale.
 
-> **Status — Phase 3 (breadth) complete.** Four sources now share one spine —
-> Gmail, IMAP, and Google Calendar adapters, all read-only — with Sonnet
-> escalation for low-confidence/high-stakes items and cross-channel entity
-> unification. Open-loop tracking and the nightly Opus Tomorrow Plan run on top.
-> Add creds (`pnpm gmail:auth`, IMAP env, `ANTHROPIC_API_KEY`) to run it on real
-> data. WhatsApp (Phase 4) awaits an explicit ban-risk decision. See
+> **Status — Phase 4 (WhatsApp) complete.** Five sources share one spine — Gmail,
+> IMAP, Google Calendar, and a read-only WhatsApp bridge — with cost-routed
+> Haiku→Sonnet→Opus intelligence, open-loop tracking, the nightly Tomorrow Plan,
+> and a per-item audit inspector. Only Phase-5 polish remains. See
 > [build phases](#build-phases).
 
 ---
@@ -70,8 +68,11 @@ packages/
   gmail/       read-only Gmail adapter (OAuth, historyId sync)
   imap/        read-only IMAP adapter (imapflow, UID sync)
   calendar/    read-only Google Calendar adapter (syncToken)
+  whatsapp/    read-only WhatsApp adapter (consumes the bridge)
+services/
+  whatsapp-bridge/   isolated Go whatsmeow sidecar (read-only, own container)
 docs/
-  ARCHITECTURE.md · SECURITY.md · live-docs/ (the integration ledger)
+  ARCHITECTURE.md · SECURITY.md · WHATSAPP.md · live-docs/ (the integration ledger)
 ```
 
 ## Quick start
@@ -108,7 +109,7 @@ pnpm typecheck && pnpm test   # full workspace check
 | **1 — Gmail e2e** | Gmail adapter → normalize → encrypted items → bulk heuristic + Haiku triage → Priority view; operator login | ✅ **done** |
 | **2 — The brief** | Open-loop tracking + nightly Opus Tomorrow Plan + Tomorrow view | ✅ **done** |
 | **3 — Breadth** | IMAP + Calendar adapters, entity unification, Tier-2 Sonnet escalation | ✅ **done** |
-| 4 — WhatsApp | Isolated, read-only, dependency-pinned module | needs your decision |
+| **4 — WhatsApp** | Isolated, read-only whatsmeow bridge + adapter (burner number) | ✅ **done** |
 | 5 — Polish | Bulk heuristics, importance learning, notifications, audit panel | — |
 
 ## What "Phase 0 done" means here

@@ -93,6 +93,9 @@ importers:
       '@cortex/imap':
         specifier: workspace:*
         version: link:../../packages/imap
+      '@cortex/whatsapp':
+        specifier: workspace:*
+        version: link:../../packages/whatsapp
       drizzle-orm:
         specifier: 0.45.2
         version: 0.45.2(@electric-sql/pglite@0.5.4)(@types/pg@8.20.0)(pg@8.22.0)
@@ -190,6 +193,15 @@ importers:
       '@types/mailparser':
         specifier: 3.4.6
         version: 3.4.6
+
+  packages/whatsapp:
+    dependencies:
+      '@cortex/config':
+        specifier: workspace:*
+        version: link:../config
+      '@cortex/core':
+        specifier: workspace:*
+        version: link:../core
 
 packages:
 

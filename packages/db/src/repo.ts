@@ -96,12 +96,16 @@ export interface UpsertResult {
   isNew: boolean;
 }
 
+function handleKindForSource(source: SourceName): EntityHandle['kind'] {
+  return source === 'whatsapp' ? 'wa_jid' : 'email';
+}
+
 /** Insert one normalized item, deduped on (source, source_item_id). */
 export async function upsertItem(n: NormalizedItem): Promise<UpsertResult> {
   const db = getDb();
   const threadId = await findOrCreateThread(n.source, n.sourceThreadId, n.subject, n.timestamp);
   const senderIdentity = n.sender.handle
-    ? await findOrCreateEntityByHandle(n.sender.handle, n.sender.displayName)
+    ? await findOrCreateEntityByHandle(n.sender.handle, n.sender.displayName, handleKindForSource(n.source))
     : null;
 
   const [ins] = await db

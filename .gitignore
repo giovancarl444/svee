@@ -28,6 +28,10 @@ pgdata/
 .auth/
 wa-session/
 
+# Go build output + local sqlite (WhatsApp bridge)
+/services/whatsapp-bridge/wa-bridge
+/services/whatsapp-bridge/*.db
+
 # Test / coverage
 coverage/
 .vitest/

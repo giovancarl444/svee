@@ -3,6 +3,7 @@ import { CalendarAdapter, authedCalendarClient, makeCalendarApi } from '@cortex/
 import { dbCheckpointStore } from '@cortex/db';
 import { GmailAdapter, authedClient, makeGmailApi } from '@cortex/gmail';
 import { ImapAdapter, makeImapFetcher } from '@cortex/imap';
+import { WhatsAppAdapter, makeWhatsAppBridge } from '@cortex/whatsapp';
 import { log } from './logger';
 import { registerAdapter } from './registry';
 
@@ -38,5 +39,12 @@ export function wireAdapters(): void {
     });
     registerAdapter(new ImapAdapter({ fetcher, store: dbCheckpointStore }));
     log.info({ host: env.IMAP_HOST }, 'adapters: imap registered');
+  }
+
+  // WhatsApp: read-only, via the isolated whatsmeow bridge (spec §7).
+  if (env.WHATSAPP_BRIDGE_URL && env.WHATSAPP_BRIDGE_TOKEN) {
+    const bridge = makeWhatsAppBridge({ url: env.WHATSAPP_BRIDGE_URL, token: env.WHATSAPP_BRIDGE_TOKEN });
+    registerAdapter(new WhatsAppAdapter({ bridge, store: dbCheckpointStore }));
+    log.info({ bridge: env.WHATSAPP_BRIDGE_URL }, 'adapters: whatsapp registered (read-only)');
   }
 }

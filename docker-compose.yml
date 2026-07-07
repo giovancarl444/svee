@@ -74,6 +74,10 @@ services:
       CORTEX_TZ: ${CORTEX_TZ:-UTC}
       CORTEX_ENCRYPTION_KEY: ${CORTEX_ENCRYPTION_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # WhatsApp is only ingested when the bridge is running (--profile whatsapp)
+      # AND a token is set; the adapter no-ops otherwise.
+      WHATSAPP_BRIDGE_URL: http://wa-bridge:8080
+      WHATSAPP_BRIDGE_TOKEN: ${WHATSAPP_BRIDGE_TOKEN:-}
     depends_on:
       db:
         condition: service_healthy
@@ -81,5 +85,23 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
 
+  # Phase 4: isolated, READ-ONLY WhatsApp bridge (whatsmeow). Not started by
+  # default. It owns the unofficial, ToS-violating, ban-risked connection; killing
+  # it costs one connector, not the brain (spec §7). Never publish its port.
+  #   docker compose --profile whatsapp --profile workers up
+  # then read the QR from its logs and scan it with your BURNER number:
+  #   docker compose logs -f wa-bridge
+  wa-bridge:
+    build:
+      context: ./services/whatsapp-bridge
+    profiles: ['whatsapp']
+    environment:
+      WA_STORE: /data/wa.db
+      WHATSAPP_BRIDGE_TOKEN: ${WHATSAPP_BRIDGE_TOKEN:?set WHATSAPP_BRIDGE_TOKEN to run the bridge}
+    volumes:
+      - wa-session:/data
+    restart: unless-stopped
+
 volumes:
   pgdata:
+  wa-session:
