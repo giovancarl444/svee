@@ -88,7 +88,15 @@ describe("buildScreeningAnswers", () => {
     expect(r.missing.some((m) => /Salary/i.test(m))).toBe(true);
   });
 
-  it("flags an unmapped question", () => {
+  it("maps the common 'why' motivation questions to whyNow", () => {
+    for (const q of ["Why this role?", "Why us?", "Why do you want to join?", "What draws you to this?"]) {
+      const r = buildScreeningAnswers(makeFacts({ screeningQuestions: [q] }), kb);
+      expect(r.missing, `question: ${q}`).toHaveLength(0);
+      expect(r.answers[0]!.a).toBe(kb.screeningAnswers.whyNow);
+    }
+  });
+
+  it("flags a genuinely unmapped question", () => {
     const r = buildScreeningAnswers(makeFacts({ screeningQuestions: ["What is your favourite colour?"] }), kb);
     expect(r.missing[0]).toMatch(/Unmapped/i);
   });
