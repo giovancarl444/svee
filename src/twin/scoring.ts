@@ -183,7 +183,18 @@ const SCAM_PATTERNS = [
 ];
 
 function creditsHeld(kb: KnowledgeBase): string[] {
-  return kb.profile.credentials.map((c) => c.toLowerCase());
+  // Drop blanks: an empty entry would make `cred.includes(h)` always true and
+  // silently disable the mandatory-credential filter.
+  return kb.profile.credentials.map((c) => c.toLowerCase().trim()).filter(Boolean);
+}
+
+/**
+ * Comp can only be compared against the floor when it's in a comparable unit.
+ * SALARY_FLOOR is in SEK by convention; a $/€ figure is NOT numerically
+ * comparable, so a foreign-currency comp is treated as unknown (never rejected).
+ */
+function compComparable(facts: RoleFacts): boolean {
+  return facts.compMin != null && (facts.compCurrency == null || facts.compCurrency === "SEK");
 }
 
 /** First matching hard-filter reason, or null. */
@@ -225,8 +236,8 @@ export function hardFilter(
   // Scam patterns.
   for (const p of SCAM_PATTERNS) if (text.includes(p)) return `scam pattern: "${p}"`;
 
-  // Comp visibly below floor.
-  if (salaryFloor != null && facts.compMin != null && facts.compMin < salaryFloor) {
+  // Comp visibly below floor (only when comp is in a comparable currency).
+  if (salaryFloor != null && compComparable(facts) && facts.compMin! < salaryFloor) {
     return `comp below floor (${facts.compMin} < ${salaryFloor})`;
   }
 
@@ -275,11 +286,12 @@ export function scoreRole(facts: RoleFacts, kb: KnowledgeBase, opts: ScoreOption
   }
   const seniority = clamp01(senFrac) * weights.seniority;
 
-  // Comp vs floor (10). Unknown = neutral (never discard on unknown comp).
+  // Comp vs floor (10). Unknown or non-comparable currency = neutral (never
+  // discard on unknown comp; never compare $/€ against a SEK floor).
   let compFrac: number;
-  if (salaryFloor == null || facts.compMin == null) compFrac = 0.6;
-  else if (facts.compMin >= salaryFloor) compFrac = 1;
-  else if (facts.compMin >= salaryFloor * 0.85) compFrac = 0.4;
+  if (salaryFloor == null || !compComparable(facts)) compFrac = 0.6;
+  else if (facts.compMin! >= salaryFloor) compFrac = 1;
+  else if (facts.compMin! >= salaryFloor * 0.85) compFrac = 0.4;
   else compFrac = 0;
   const comp = compFrac * weights.comp;
 

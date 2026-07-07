@@ -44,9 +44,21 @@ describe("deterministicCoverLetter", () => {
 });
 
 describe("unbackedMetrics (truth validator)", () => {
-  it("passes numbers that are in the KB and flags ones that aren't", () => {
+  it("passes numbers that are in the Achievement Bank and flags ones that aren't", () => {
     expect(unbackedMetrics("I wrote 78 unit tests.", kb)).toHaveLength(0);
     expect(unbackedMetrics("I wrote 5000 unit tests.", kb)).toEqual(["5000"]);
+  });
+
+  it("catches unit-suffixed fabricated metrics (no word boundary after the digit)", () => {
+    const u = unbackedMetrics("We grew to 10k users, made it 3x faster, and hit 500rps.", kb);
+    expect(u).toContain("10");
+    expect(u).toContain("3");
+    expect(u).toContain("500");
+  });
+
+  it("does not treat incidental KB digits (phone/dates) as backed metrics", () => {
+    // The phone number is in the KB but NOT the Achievement Bank → still unbacked.
+    expect(unbackedMetrics("Call 46700000000 for a reference.", kb)).toContain("46700000000");
   });
 });
 

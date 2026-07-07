@@ -141,8 +141,12 @@ export async function countSubmittedSince(db: Database, sinceIso: string | null)
 }
 
 /**
- * Staged applications past their follow-up window with no inbound reply — the
- * "no reply after N days on a high-fit role → draft ONE polite nudge" trigger.
+ * SUBMITTED applications past their follow-up window with no reply — the "no
+ * reply after N days on a high-fit role → draft ONE polite nudge" trigger.
+ * Targets `submitted` (not `staged`: a staged application was never actually
+ * sent, so there is nothing to follow up on). Excludes anything that already has
+ * a follow-up approval, so the twin never drafts more than ONE unsolicited nudge
+ * per application. Wait is measured from submission.
  */
 export async function dueFollowups(
   db: Database,
@@ -150,13 +154,18 @@ export async function dueFollowups(
 ): Promise<Array<{ applicationId: string; company: string; role: string; channel: string; daysWaiting: number }>> {
   const rows = await db.query<{ id: string; company: string; role: string; channel: string; days: number }>(
     `SELECT a.id, a.company, a.role, a.channel,
-            GREATEST(0, EXTRACT(EPOCH FROM ($1::timestamptz - a.created_at)) / 86400)::int AS days
+            GREATEST(0, EXTRACT(EPOCH FROM ($1::timestamptz - COALESCE(a.submitted_at, a.created_at))) / 86400)::int AS days
        FROM twin_applications a
-      WHERE a.status = 'staged'
+      WHERE a.status = 'submitted'
         AND a.followup_due IS NOT NULL AND a.followup_due <= $1::timestamptz
         AND NOT EXISTS (
           SELECT 1 FROM twin_messages m
            WHERE m.application_id = a.id AND m.direction = 'inbound'
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM twin_approvals ap
+           WHERE ap.type = 'send_followup'
+             AND lower(ap.company) = lower(a.company) AND lower(ap.role) = lower(a.role)
         )`,
     [nowIso],
   );

@@ -114,4 +114,25 @@ describe("runTwin — the daily loop", () => {
     expect(tables.filter((t) => t === "messages")).toHaveLength(2);
     expect(out.digest.needs_decision[0]).toMatch(/^OFFER/);
   });
+
+  it("does not double-apply the same role surfaced under two different URLs", async () => {
+    const kb = fixtureKb();
+    const config = loadTwinConfig({ env: {}, argv: [] });
+    let n = 0;
+    const out = await runTwin({
+      kb,
+      missingSlots: [],
+      config,
+      listings: [
+        { facts: makeFacts({ company: "Acme", role: "Full-stack Engineer", url: "https://linkedin.com/jobs/1" }) },
+        { facts: makeFacts({ company: "Acme", role: "Full-stack Engineer", url: "https://boards.greenhouse.io/acme/2" }) },
+      ],
+      state: { liveApplicationKeys: new Set(), submittedPrevRun: 0 },
+      now: new Date("2026-07-07T00:00:00Z"),
+      idGen: () => `id-${n++}`,
+    });
+    expect(out.digest.found).toBe(1);
+    expect(out.digest.staged).toBe(1);
+    expect(out.pipeline_writes.filter((w) => w.table === "applications")).toHaveLength(1);
+  });
 });

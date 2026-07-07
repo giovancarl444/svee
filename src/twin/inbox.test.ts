@@ -31,6 +31,13 @@ describe("classifyReply", () => {
     expect(c.kind).toBe("offer");
   });
 
+  it("classifies a rejection that mentions 'interview' as a rejection, not an interview", () => {
+    const c = classifyReply(
+      msg("We enjoyed your interview, but unfortunately we've decided to proceed with other candidates."),
+    );
+    expect(c.kind).toBe("rejection");
+  });
+
   it("handles Swedish", () => {
     const c = classifyReply(msg("Vi vill erbjuda dig tjänsten. Välkommen ombord!"));
     expect(c.kind).toBe("offer");

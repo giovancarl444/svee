@@ -99,11 +99,14 @@ export async function runTwin(input: TwinRunInput): Promise<TwinRunOutput> {
   const needsDecision: string[] = [];
 
   // ── STEP 1 — INTAKE (dedupe within-run and against live applications) ──────
+  // Dedupe on ROLE IDENTITY (company::role), the same key the live-application
+  // check uses — so the same role surfaced under two different URLs in one run
+  // (e.g. a LinkedIn link + a company-page row) is not scored/staged twice.
   const seen = new Set<string>();
   const unique: RoleFacts[] = [];
   for (const listing of input.listings) {
     const facts = parseListing(listing);
-    const key = jobKey(facts);
+    const key = appKey(facts.company, facts.role);
     if (seen.has(key)) continue;
     seen.add(key);
     unique.push(facts);
@@ -316,7 +319,18 @@ export async function runTwin(input: TwinRunInput): Promise<TwinRunOutput> {
   }
 
   // Ghost follow-ups: ONE polite nudge per stalled high-fit application.
+  // Reconcile against replies seen THIS run (not yet persisted): if the recruiter
+  // just replied, don't also nudge them. (dueFollowups already excludes apps with
+  // a persisted inbound reply or an existing follow-up approval.)
+  const repliedThisRun = new Set<string>();
+  for (const msg of input.inbound ?? []) {
+    if (msg.applicationId) repliedThisRun.add(`app:${msg.applicationId}`);
+    if (msg.company && msg.role) repliedThisRun.add(appKey(msg.company, msg.role));
+  }
   for (const f of input.state.followupsDue ?? []) {
+    if (repliedThisRun.has(`app:${f.applicationId}`) || repliedThisRun.has(appKey(f.company, f.role))) {
+      continue;
+    }
     const approvalId = idGen();
     approvals.push({
       id: approvalId,

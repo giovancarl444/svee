@@ -79,11 +79,23 @@ export function deterministicCoverLetter(facts: RoleFacts, kb: KnowledgeBase): s
 
 // ── Truth validator ──────────────────────────────────────────────────────────
 
-const NUMBER_RE = /\b\d[\d.,]*\b/g;
+// No trailing \b: a number glued to a unit letter ("10k", "3x", "500rps",
+// "300ms", "$2M") has no word boundary after the digit run, so an anchored regex
+// would miss it and let a fabricated metric through. Match the bare digit run.
+const NUMBER_RE = /\d[\d.,]*/g;
 
-/** Every number token that appears anywhere in the KB (the allowed universe). */
+/**
+ * The allowed number universe = only the Achievement Bank and experience bullets
+ * (where real metrics live). Deliberately NOT the whole KB: scanning the entire
+ * serialized KB would bless incidental digits (phone, dates, versions) as
+ * "backed", so a fabricated stat that happened to reuse one would pass.
+ */
 export function kbNumberTokens(kb: KnowledgeBase): Set<string> {
-  const tokens = JSON.stringify(kb).match(NUMBER_RE) ?? [];
+  const corpus = [
+    ...kb.achievementBank,
+    ...kb.experience.flatMap((e) => [e.scope, ...e.bullets]),
+  ].join(" ");
+  const tokens = corpus.match(NUMBER_RE) ?? [];
   return new Set(tokens.map((t) => t.replace(/[.,]+$/, "")));
 }
 

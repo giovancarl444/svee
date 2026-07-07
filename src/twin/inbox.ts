@@ -105,19 +105,22 @@ function findAll(haystack: string, needles: string[]): string[] {
 export function classifyReply(msg: InboundMessage): ReplyClassification {
   const text = `${msg.subject ?? ""}\n${msg.body}`;
 
-  const offer = findAll(text, OFFER);
-  if (offer.length) return { kind: "offer", priority: "critical", signals: offer };
+  // Score every category by hit count, not first-match. A rejection that mentions
+  // "interview" ("we enjoyed your interview but unfortunately…") has more rejection
+  // hits than interview hits, so it classifies as a rejection instead of an
+  // interview request. Ties break by this priority order (offer first).
+  const cats: Array<{ kind: ReplyKind; priority: AlertPriority; hits: string[] }> = [
+    { kind: "offer", priority: "critical", hits: findAll(text, OFFER) },
+    { kind: "interview_request", priority: "high", hits: findAll(text, INTERVIEW) },
+    { kind: "recruiter_screen", priority: "normal", hits: findAll(text, SCREEN) },
+    { kind: "rejection", priority: "normal", hits: findAll(text, REJECTION) },
+  ];
 
-  const interview = findAll(text, INTERVIEW);
-  if (interview.length) return { kind: "interview_request", priority: "high", signals: interview };
-
-  const screen = findAll(text, SCREEN);
-  if (screen.length) return { kind: "recruiter_screen", priority: "normal", signals: screen };
-
-  const rejection = findAll(text, REJECTION);
-  if (rejection.length) return { kind: "rejection", priority: "normal", signals: rejection };
-
-  return { kind: "other", priority: "normal", signals: [] };
+  // Stable sort keeps the priority order on ties.
+  const scored = cats.filter((c) => c.hits.length).sort((a, b) => b.hits.length - a.hits.length);
+  const best = scored[0];
+  if (!best) return { kind: "other", priority: "normal", signals: [] };
+  return { kind: best.kind, priority: best.priority, signals: best.hits };
 }
 
 /** Is this reply text primarily Swedish? Drives the language of a drafted reply. */

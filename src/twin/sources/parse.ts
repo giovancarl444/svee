@@ -31,10 +31,20 @@ function lc(s: string | undefined): string {
   return (s ?? "").toLowerCase();
 }
 
+function escapeRe(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Boundary-aware matchers so short tokens (ai, go, ml, java, rest) don't match
+// inside common words ("available"→ai, "interested"→rest, "javascript"→java).
+// Boundaries are non-alphanumeric transitions, which also work for "next.js"/"c#".
+const SKILL_MATCHERS = SKILL_VOCAB.map((skill) => ({
+  skill,
+  re: new RegExp(`(?<![a-z0-9])${escapeRe(skill)}(?![a-z0-9])`, "i"),
+}));
+
 export function extractSkills(text: string): string[] {
-  const hay = lc(text);
-  const found = SKILL_VOCAB.filter((s) => hay.includes(s));
-  return [...new Set(found)];
+  return [...new Set(SKILL_MATCHERS.filter((m) => m.re.test(text)).map((m) => m.skill))];
 }
 
 function detectSeniority(text: string): Seniority {
@@ -81,16 +91,28 @@ function detectCompType(text: string): CompType {
 }
 
 function detectComp(text: string): { compMin: number | null; compCurrency?: string } {
-  // e.g. "45000 SEK", "SEK 45,000", "€50k", "40-55k".
-  const m = /(?:SEK|kr|€|EUR|\$|USD)\s?([\d][\d\s,.]*)k?|([\d][\d\s,.]*)\s?(?:SEK|kr|EUR|€)/i.exec(text);
+  // Requires a currency marker so we don't grab "6+ years". Handles "45000 SEK",
+  // "SEK 45,000", "€50k", and ranges "€40-55k" (the trailing k scales the whole
+  // range; we take the LOWER bound). "kr"/"SEK" never trigger the k×1000 suffix
+  // because `k\b` needs a word boundary after the k (there isn't one in "kr").
+  const currency = /€|\bEUR\b/i.test(text)
+    ? "EUR"
+    : /\$|\bUSD\b/i.test(text)
+      ? "USD"
+      : /\bSEK\b|\bkr\b/i.test(text)
+        ? "SEK"
+        : undefined;
+  if (!currency) return { compMin: null };
+
+  const re =
+    /(?:SEK|kr|EUR|€|\$|USD)\s*(\d[\d.,]*)(?:\s*[-–]\s*\d[\d.,]*)?\s*(k\b)?|(\d[\d.,]*)(?:\s*[-–]\s*\d[\d.,]*)?\s*(k\b)?\s*(?:SEK|kr|EUR|€|USD)/i;
+  const m = re.exec(text);
   if (!m) return { compMin: null };
-  const numStr = (m[1] ?? m[2] ?? "").replace(/[\s,]/g, "");
-  let n = Number(numStr);
+  const lower = m[1] ?? m[3];
+  const kFlag = Boolean(m[2] ?? m[4]);
+  let n = Number((lower ?? "").replace(/[\s,]/g, ""));
   if (!Number.isFinite(n) || n === 0) return { compMin: null };
-  // A "k" thousands suffix only counts when it's attached to the number ("50k"),
-  // not when it's part of a currency word like "SEK" or "kr".
-  if (/\d\s?k\b/i.test(m[0])) n *= 1000;
-  const currency = /€|EUR/i.test(m[0]) ? "EUR" : /\$|USD/i.test(m[0]) ? "USD" : "SEK";
+  if (kFlag) n *= 1000;
   return { compMin: n, compCurrency: currency };
 }
 
@@ -104,9 +126,11 @@ function detectEffort(text: string): Effort {
 
 function detectApplyMethod(url: string, raw: RawListing): ApplyMethod {
   if (raw.facts?.applyMethod) return raw.facts.applyMethod;
-  if (raw.applyEmail || raw.facts?.applyEmail) return "email";
   const u = lc(url);
+  // ATS wins over email (spec channel preference: ATS > email > LinkedIn), so a
+  // posting carrying both an application email and an ATS/career URL routes to ATS.
   if (detectAtsVendor(url)) return u.includes("linkedin.com") ? "linkedin_external" : "ats";
+  if (raw.applyEmail || raw.facts?.applyEmail) return "email";
   if (u.includes("linkedin.com/jobs")) return "linkedin_easy_apply";
   if (u.includes("linkedin.com")) return "linkedin_external";
   if (u.includes("/careers") || u.includes("/jobs")) return "company_page";

@@ -81,6 +81,18 @@ describe("scoreRole — hard filters auto-reject", () => {
     expect(r.hardFilter).toMatch(/comp below floor/i);
   });
 
+  it("does NOT reject foreign-currency comp against a SEK floor (incomparable units)", () => {
+    const r = scoreRole(makeFacts({ compMin: 30000, compCurrency: "USD" }), kb, { ...opts, salaryFloor: 45000 });
+    expect(r.hardFilter).toBeNull();
+    expect(r.breakdown.comp).toBeCloseTo(0.6 * DEFAULT_WEIGHTS.comp); // neutral
+  });
+
+  it("an empty credential entry does not silently disable the mandatory-credential filter", () => {
+    const kbEmptyCred = { ...kb, profile: { ...kb.profile, credentials: [""] } };
+    const r = scoreRole(makeFacts({ mandatoryCredential: "university degree" }), kbEmptyCred, opts);
+    expect(r.hardFilter).toMatch(/credential/i);
+  });
+
   it("rejects an obvious scam pattern", () => {
     const r = scoreRole(makeFacts({ descriptionText: "Pay a small registration fee to apply." }), kb, opts);
     expect(r.hardFilter).toMatch(/scam/i);

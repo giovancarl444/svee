@@ -155,18 +155,30 @@ describe("state reads", () => {
     expect(await countSubmittedSince(db, null)).toBe(0);
   });
 
-  it("dueFollowups returns stalled staged apps with no inbound reply", async () => {
-    // app-1 (staged, created 2026-05-20, followup_due 2026-06-01) HAS an inbound message → excluded.
-    // Add a fresh stalled app with no messages → included.
+  it("dueFollowups: submitted-only, no reply, and never more than one nudge", async () => {
     await db.upsert(
       "twin_applications",
-      [{ id: "app-stall", company: "Stall", role: "R", status: "staged", followup_due: "2026-06-01T00:00:00Z", created_at: "2026-05-20T00:00:00Z" }],
+      [
+        // Due: submitted, past followup, no reply, no prior nudge → included.
+        { id: "app-due", company: "DueCo", role: "R", status: "submitted", submitted_at: "2026-05-20T00:00:00Z", followup_due: "2026-06-01T00:00:00Z", created_at: "2026-05-19T00:00:00Z" },
+        // Staged (never sent) → excluded even though past followup.
+        { id: "app-staged", company: "StagedCo", role: "R", status: "staged", followup_due: "2026-06-01T00:00:00Z", created_at: "2026-05-19T00:00:00Z" },
+        // Submitted but already got an inbound reply → excluded.
+        { id: "app-replied", company: "RepliedCo", role: "R", status: "submitted", submitted_at: "2026-05-20T00:00:00Z", followup_due: "2026-06-01T00:00:00Z", created_at: "2026-05-19T00:00:00Z" },
+        // Submitted but already has a follow-up approval → excluded (one nudge only).
+        { id: "app-nudged", company: "NudgedCo", role: "R", status: "submitted", submitted_at: "2026-05-20T00:00:00Z", followup_due: "2026-06-01T00:00:00Z", created_at: "2026-05-19T00:00:00Z" },
+      ],
       ["id"],
     );
+    await db.upsert("twin_messages", [{ id: "reply-1", application_id: "app-replied", direction: "inbound", kind: "other" }], ["id"]);
+    await db.upsert("twin_approvals", [{ id: "fu-1", type: "send_followup", company: "NudgedCo", role: "R", status: "pending" }], ["id"]);
+
     const due = await dueFollowups(db, "2026-06-20T00:00:00Z");
     const ids = due.map((d) => d.applicationId);
-    expect(ids).toContain("app-stall");
-    expect(ids).not.toContain("app-1"); // has an inbound message
-    expect(due.find((d) => d.applicationId === "app-stall")!.daysWaiting).toBeGreaterThan(0);
+    expect(ids).toContain("app-due");
+    expect(ids).not.toContain("app-staged");
+    expect(ids).not.toContain("app-replied");
+    expect(ids).not.toContain("app-nudged");
+    expect(due.find((d) => d.applicationId === "app-due")!.daysWaiting).toBeGreaterThan(0);
   });
 });
