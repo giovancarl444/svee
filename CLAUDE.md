@@ -13,8 +13,11 @@ add a send path (email, WhatsApp, anything) without an explicit, gated decision.
 
 ## The constraints that override defaults
 
-1. Local-first; the only outbound calls are the source APIs + Anthropic. No
-   analytics/telemetry/CDN. Fonts are vendored.
+1. Local-first; the only outbound calls are the source APIs + the one configured
+   model provider (Anthropic, or an OpenAI-compatible endpoint — local Ollama or
+   hosted DeepSeek/OpenRouter — chosen by `CORTEX_MODEL_PROVIDER`). Running the
+   model locally via Ollama keeps triage fully on-box. No analytics/telemetry/CDN.
+   Fonts are vendored.
 2. Data minimization: the **redaction/allowlist layer** (`packages/ai/src/redaction.ts`)
    is the ONLY constructor of model payloads, and what it returns is stored verbatim
    in `api_calls`. Never send full bodies/chains.
@@ -28,15 +31,20 @@ add a send path (email, WhatsApp, anything) without an explicit, gated decision.
   group); `app/login` is outside it. Reads via `lib/queries.ts`; mutations via
   Server Actions in `app/(secure)/actions.ts`.
 - `apps/workers` — the runner. `serve` = always-on scheduler; also `sync`,
-  `ingest`, `triage`, `escalate`, `synthesize`, `gmail:auth`, `hash-password`.
+  `ingest`, `triage`, `escalate`, `synthesize`, `gmail:auth`, `outlook:auth`,
+  `hash-password`.
 - `packages/core` — `SourceAdapter` interface, normalized types, enum vocabulary,
   `isBulk` heuristic. The single source of truth for the controlled vocabularies.
 - `packages/db` — Drizzle schema (the spine), migrations, column encryption, and
   the repo layer (all the SQL). Tests run against PGlite.
-- `packages/ai` — model routing, redaction, `api_calls` audit, and the Claude
-  calls (triage/escalate/synthesis).
-- `packages/{gmail,imap,calendar,whatsapp}` — one read-only adapter each.
+- `packages/ai` — model routing, the provider seam (`provider.ts`: Anthropic ↔
+  OpenAI-compatible), redaction, `api_calls` audit, and the model calls
+  (triage/escalate/synthesis).
+- `packages/{gmail,imap,calendar,whatsapp,imessage}` — one read-only adapter each.
+  Outlook.com rides the `imap` adapter via OAuth/XOAUTH2 (`packages/imap/src/outlook-oauth.ts`).
 - `services/whatsapp-bridge` — the isolated Go whatsmeow sidecar (read-only).
+- `services/imessage-bridge` — a read-only Python sidecar that runs on the
+  operator's Mac and reads `~/Library/Messages/chat.db`.
 
 ## Conventions
 
@@ -50,7 +58,8 @@ add a send path (email, WhatsApp, anything) without an explicit, gated decision.
   wins in queries.
 - Model IDs are pinned by env (`claude-haiku-4-5-20251001`, `claude-sonnet-5`,
   `claude-opus-4-8`). Don't send `temperature` to Sonnet 5 / Opus 4.8 — they
-  reject it (see `docs/live-docs/anthropic-api.md`).
+  reject it (see `docs/live-docs/anthropic-api.md`). On the OpenAI-compatible
+  provider, override the per-tier model IDs (e.g. `qwen3`, `deepseek-chat`).
 - Ground every integration in `docs/live-docs/` (captured from official docs), not
   memory. Refresh it before changing an adapter.
 
@@ -64,6 +73,7 @@ pnpm db:migrate                      # apply (needs DATABASE_URL)
 pnpm dev                             # dashboard
 pnpm --filter @cortex/workers serve  # the always-on scheduler
 (cd services/whatsapp-bridge && go test ./... && go build ./...)
+(cd services/imessage-bridge && python3 -m unittest -v)  # macOS sidecar tests
 ```
 
 ## Gotchas

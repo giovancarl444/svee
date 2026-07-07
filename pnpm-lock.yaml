@@ -93,6 +93,9 @@ importers:
       '@cortex/imap':
         specifier: workspace:*
         version: link:../../packages/imap
+      '@cortex/imessage':
+        specifier: workspace:*
+        version: link:../../packages/imessage
       '@cortex/whatsapp':
         specifier: workspace:*
         version: link:../../packages/whatsapp
@@ -197,6 +200,15 @@ importers:
       '@types/mailparser':
         specifier: 3.4.6
         version: 3.4.6
+
+  packages/imessage:
+    dependencies:
+      '@cortex/config':
+        specifier: workspace:*
+        version: link:../config
+      '@cortex/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/whatsapp:
     dependencies:

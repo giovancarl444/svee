@@ -4,7 +4,7 @@
  * enums and the TypeScript unions can never drift apart.
  */
 
-export const SOURCES = ['gmail', 'imap', 'whatsapp', 'calendar'] as const;
+export const SOURCES = ['gmail', 'imap', 'whatsapp', 'calendar', 'imessage'] as const;
 export type SourceName = (typeof SOURCES)[number];
 
 export const DIRECTIONS = ['inbound', 'outbound', 'system'] as const;

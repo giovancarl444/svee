@@ -97,7 +97,11 @@ export interface UpsertResult {
 }
 
 function handleKindForSource(source: SourceName): EntityHandle['kind'] {
-  return source === 'whatsapp' ? 'wa_jid' : 'email';
+  if (source === 'whatsapp') return 'wa_jid';
+  // iMessage handles are usually phone numbers (some are Apple-ID emails, but a
+  // single kind per source keeps cross-channel merge-by-value working either way).
+  if (source === 'imessage') return 'phone';
+  return 'email';
 }
 
 /** Insert one normalized item, deduped on (source, source_item_id). */

@@ -9,6 +9,7 @@ import {
   makeImapFetcher,
   makeMicrosoftTokenProvider,
 } from '@cortex/imap';
+import { IMessageAdapter, makeIMessageBridge } from '@cortex/imessage';
 import { WhatsAppAdapter, makeWhatsAppBridge } from '@cortex/whatsapp';
 import { log } from './logger';
 import { registerAdapter } from './registry';
@@ -72,5 +73,12 @@ export function wireAdapters(): void {
     const bridge = makeWhatsAppBridge({ url: env.WHATSAPP_BRIDGE_URL, token: env.WHATSAPP_BRIDGE_TOKEN });
     registerAdapter(new WhatsAppAdapter({ bridge, store: dbCheckpointStore }));
     log.info({ bridge: env.WHATSAPP_BRIDGE_URL }, 'adapters: whatsapp registered (read-only)');
+  }
+
+  // iMessage: read-only, via the macOS chat.db sidecar (runs on the operator's Mac).
+  if (env.IMESSAGE_BRIDGE_URL && env.IMESSAGE_BRIDGE_TOKEN) {
+    const bridge = makeIMessageBridge({ url: env.IMESSAGE_BRIDGE_URL, token: env.IMESSAGE_BRIDGE_TOKEN });
+    registerAdapter(new IMessageAdapter({ bridge, store: dbCheckpointStore }));
+    log.info({ bridge: env.IMESSAGE_BRIDGE_URL }, 'adapters: imessage registered (read-only)');
   }
 }

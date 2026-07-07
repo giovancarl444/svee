@@ -78,6 +78,10 @@ const EnvSchema = z.object({
   // WhatsApp (Phase 4).
   WHATSAPP_BRIDGE_URL: z.string().optional(),
   WHATSAPP_BRIDGE_TOKEN: z.string().optional(),
+
+  // iMessage (macOS chat.db sidecar — read-only).
+  IMESSAGE_BRIDGE_URL: z.string().optional(),
+  IMESSAGE_BRIDGE_TOKEN: z.string().optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

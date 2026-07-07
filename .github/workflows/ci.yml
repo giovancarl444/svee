@@ -49,3 +49,14 @@ jobs:
         run: |
           go build ./...
           go test ./...
+
+  imessage-bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test the iMessage bridge (stdlib only)
+        working-directory: services/imessage-bridge
+        run: python -m unittest -v

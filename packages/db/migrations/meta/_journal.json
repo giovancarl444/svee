@@ -15,6 +15,13 @@
       "when": 1783424501296,
       "tag": "0001_misty_namorita",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783455631547,
+      "tag": "0002_past_clea",
+      "breakpoints": true
     }
   ]
 }
