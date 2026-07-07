@@ -119,6 +119,44 @@ CREATE TABLE IF NOT EXISTS daily_performance (
 );
 CREATE INDEX IF NOT EXISTS idx_daily_perf_day ON daily_performance (day);
 
+-- Programs / campaigns (advertiser programs a partner promotes, or a brand's
+-- own campaigns). Gives by-program breakdowns a human-readable name.
+CREATE TABLE IF NOT EXISTS programs (
+  campaign_id     text PRIMARY KEY,
+  name            text,
+  advertiser_id   text,
+  advertiser_name text,
+  status          text,
+  raw             jsonb NOT NULL,
+  synced_at       timestamptz NOT NULL DEFAULT now()
+);
+
+-- Media properties (partner persona): the partner's own sites/apps.
+CREATE TABLE IF NOT EXISTS media_properties (
+  id          text PRIMARY KEY,
+  name        text,
+  type        text,
+  url         text,
+  status      text,
+  raw         jsonb NOT NULL,
+  synced_at   timestamptz NOT NULL DEFAULT now()
+);
+
+-- Deals (partner persona): promotional deals offered by advertisers.
+CREATE TABLE IF NOT EXISTS deals (
+  id            text PRIMARY KEY,
+  name          text,
+  campaign_id   text,
+  advertiser_id text,
+  description   text,
+  discount_type text,
+  start_date    timestamptz,
+  end_date      timestamptz,
+  raw           jsonb NOT NULL,
+  synced_at     timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_deals_campaign ON deals (campaign_id);
+
 -- Webhook/postback event log for dedupe + audit (§Phase 3).
 CREATE TABLE IF NOT EXISTS webhook_events (
   event_id     text PRIMARY KEY,          -- provider event id (dedupe)

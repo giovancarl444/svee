@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { epc, conversionRate } from "./metrics.js";
+import { epc, conversionRate, reversalRate } from "./metrics.js";
 
 describe("metric math", () => {
   it("epc = revenue / clicks", () => {
@@ -13,5 +13,9 @@ describe("metric math", () => {
   });
   it("conversionRate guards divide-by-zero", () => {
     expect(conversionRate(5, 0)).toBe(0);
+  });
+  it("reversalRate = reversed / total actions", () => {
+    expect(reversalRate(3, 12)).toBeCloseTo(0.25);
+    expect(reversalRate(1, 0)).toBe(0);
   });
 });

@@ -63,7 +63,7 @@ const numberFromEnv = (fallback: number) =>
 const EnvSchema = z.object({
   IMPACT_ACCOUNT_SID: z.string().optional().default(""),
   IMPACT_AUTH_TOKEN: z.string().optional().default(""),
-  IMPACT_PERSONA: z.string().optional().default("brand"),
+  IMPACT_PERSONA: z.string().optional().default("partner"),
   IMPACT_API_HOST: z.string().optional().default("https://api.impact.com"),
 
   IMPACT_BRAND_VERSION: z.string().optional().default("14"),

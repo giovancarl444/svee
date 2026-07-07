@@ -3,143 +3,205 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>impact.com — performance</title>
+    <title>impact.com — partner performance</title>
     <style>
       :root {
-        --bg: #f7f8fa; --card: #ffffff; --ink: #12151c; --muted: #5b6472;
-        --line: #e6e9ef; --accent: #2f6fed; --pos: #1a8f5a; --neg: #d1453b;
-        --pend: #c98a12; --appr: #1a8f5a;
-        --shadow: 0 1px 2px rgba(16,22,34,.06), 0 4px 16px rgba(16,22,34,.05);
+        --bg: #f6f7f9; --card: #fff; --ink: #12151c; --muted: #5b6472; --line: #e6e9ef;
+        --accent: #2f6fed; --accent2: #12a594; --pos: #1a8f5a; --neg: #d1453b;
+        --pend: #c98a12; --rej: #8b5cf6;
+        --shadow: 0 1px 2px rgba(16,22,34,.06), 0 6px 20px rgba(16,22,34,.05);
       }
       @media (prefers-color-scheme: dark) {
         :root {
-          --bg: #0e1116; --card: #161b22; --ink: #e8ebf0; --muted: #9aa4b2;
-          --line: #232a34; --accent: #6a9bff; --pos: #46c98a; --neg: #f0655a;
-          --pend: #e0a53a; --appr: #46c98a; --shadow: none;
+          --bg: #0d1016; --card: #161b22; --ink: #e8ebf0; --muted: #99a2b0; --line: #232a34;
+          --accent: #6a9bff; --accent2: #2dd4bf; --pos: #46c98a; --neg: #f0655a;
+          --pend: #e0a53a; --rej: #a78bfa; --shadow: none;
         }
       }
       * { box-sizing: border-box; }
       body {
         margin: 0; background: var(--bg); color: var(--ink);
         font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
-        -webkit-font-smoothing: antialiased; padding: env(safe-area-inset-top) 0 40px;
+        -webkit-font-smoothing: antialiased; padding: env(safe-area-inset-top) 0 48px;
       }
-      .wrap { max-width: 960px; margin: 0 auto; padding: 16px; }
-      header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; margin: 8px 2px 18px; }
+      .wrap { max-width: 1000px; margin: 0 auto; padding: 16px; }
+      header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 6px 2px 16px; }
       h1 { font-size: 18px; margin: 0; font-weight: 650; letter-spacing: -.01em; }
+      .badge { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+        color: var(--accent); border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; }
       .meta { color: var(--muted); font-size: 12.5px; }
       .grid { display: grid; gap: 12px; }
       .kpis { grid-template-columns: repeat(2, 1fr); }
-      @media (min-width: 560px) { .kpis { grid-template-columns: repeat(3, 1fr); } }
-      .card {
-        background: var(--card); border: 1px solid var(--line); border-radius: 14px;
-        padding: 14px; box-shadow: var(--shadow);
-      }
-      .kpi .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
-      .kpi .value { font-size: 24px; font-weight: 680; margin-top: 4px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-      .kpi .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
-      section { margin-top: 20px; }
-      h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 2px 10px; font-weight: 600; }
-      .states { display: flex; gap: 8px; flex-wrap: wrap; }
-      .chip { border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; border: 1px solid var(--line); font-variant-numeric: tabular-nums; }
-      .chip.pending { color: var(--pend); } .chip.approved { color: var(--appr); }
-      .chip.reversed, .chip.rejected { color: var(--neg); }
+      @media (min-width: 520px) { .kpis { grid-template-columns: repeat(4, 1fr); } }
+      .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; box-shadow: var(--shadow); }
+      .kpi .label { color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: .03em; }
+      .kpi .value { font-size: 22px; font-weight: 680; margin-top: 3px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+      .kpi .sub { color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+      .kpi .value.pos { color: var(--pos); } .kpi .value.neg { color: var(--neg); }
+      section { margin-top: 22px; }
+      h2 { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 2px 10px; font-weight: 600; display:flex; gap:8px; align-items:center; }
+      h2 .hint { text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 11.5px; }
+      .funnel { height: 22px; border-radius: 7px; overflow: hidden; display: flex; margin-bottom: 12px; }
+      .funnel > span { height: 100%; }
+      .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; }
+      .legend .dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
+      .legend b { font-variant-numeric: tabular-nums; }
       .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; }
-      table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 520px; }
+      table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 560px; }
       th, td { text-align: right; padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
-      th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: var(--card); }
-      th { color: var(--muted); font-weight: 600; font-size: 12px; }
-      .bars { display: flex; align-items: flex-end; gap: 3px; height: 120px; padding-top: 8px; }
-      .bar { flex: 1 1 0; background: var(--accent); border-radius: 3px 3px 0 0; min-height: 2px; opacity: .85; }
-      .axis { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; margin-top: 6px; }
+      th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: var(--card); max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+      th { color: var(--muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .03em; }
+      tbody tr:last-child td { border-bottom: none; }
+      .chart { width: 100%; height: auto; display: block; }
+      .cards2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+      .mini { padding: 12px; }
+      .mini .t { font-weight: 600; font-size: 13.5px; margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .mini .s { color: var(--muted); font-size: 12px; }
+      .pill { font-size: 10.5px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
       .empty { text-align: center; color: var(--muted); padding: 40px 16px; }
       .empty code { background: var(--card); border: 1px solid var(--line); padding: 2px 6px; border-radius: 6px; }
-      a { color: var(--accent); }
     </style>
   </head>
   <body>
     <div class="wrap">
       <header>
         <h1>impact.com performance</h1>
+        <span class="badge" id="persona"></span>
         <span class="meta" id="meta"></span>
       </header>
       <div id="root"></div>
     </div>
 
     <script>
-      const $ = (h) => { const t = document.createElement("template"); t.innerHTML = h.trim(); return t.content.firstChild; };
       const fmtN = (n) => new Intl.NumberFormat().format(Math.round(n || 0));
       const fmtM = (n, c) => new Intl.NumberFormat(undefined, { style: "currency", currency: c || "USD", maximumFractionDigits: 0 }).format(n || 0);
       const fmtM2 = (n, c) => new Intl.NumberFormat(undefined, { style: "currency", currency: c || "USD", maximumFractionDigits: 2 }).format(n || 0);
       const pct = (n) => ((n || 0) * 100).toFixed(2) + "%";
+      const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-      function kpi(label, value, sub) {
-        return `<div class="card kpi"><div class="label">${label}</div><div class="value">${value}</div>${sub ? `<div class="sub">${sub}</div>` : ""}</div>`;
-      }
+      const kpi = (label, value, sub, cls) =>
+        `<div class="card kpi"><div class="label">${label}</div><div class="value ${cls || ""}">${value}</div>${sub ? `<div class="sub">${sub}</div>` : ""}</div>`;
 
       function render(m) {
-        document.getElementById("meta").textContent =
-          `${m.currency} · generated ${new Date(m.generatedAt).toLocaleString()}`;
-        const t = m.totals, s = m.actionsByState;
-        const root = document.getElementById("root");
+        const cur = m.currency;
+        document.getElementById("persona").textContent = m.persona || "";
+        document.getElementById("meta").textContent = `${cur} · generated ${new Date(m.generatedAt).toLocaleString()}`;
+        const t = m.totals;
+        const partnerFocus = (m.persona || "partner") === "partner";
 
         const kpis = `<div class="grid kpis">
-          ${kpi("Revenue (approved)", fmtM(t.revenue, m.currency))}
-          ${kpi("EPC", fmtM2(t.epc, m.currency), "earnings / click")}
+          ${kpi("Revenue (approved)", fmtM(t.revenue, cur))}
+          ${kpi("Pending value", fmtM(t.pendingValue, cur), "awaiting approval")}
+          ${kpi("EPC", fmtM2(t.epc, cur), "per click")}
           ${kpi("Conversion rate", pct(t.conversionRate), `${fmtN(t.actions)} / ${fmtN(t.clicks)}`)}
           ${kpi("Clicks", fmtN(t.clicks))}
           ${kpi("Actions", fmtN(t.actions))}
-          ${kpi("Payout", fmtM(t.payout, m.currency), "commission")}
+          ${kpi("Payout", fmtM(t.payout, cur), "commission")}
+          ${kpi("Reversal rate", pct(t.reversalRate), fmtM(t.reversedValue, cur) + " reversed", t.reversalRate > 0.2 ? "neg" : "")}
         </div>`;
 
-        const states = `<section><h2>Actions by state</h2><div class="states">
-          <span class="chip approved">Approved ${fmtN(s.approved)}</span>
-          <span class="chip pending">Pending ${fmtN(s.pending)}</span>
-          <span class="chip reversed">Reversed ${fmtN(s.reversed)}</span>
-          <span class="chip rejected">Rejected ${fmtN(s.rejected)}</span>
-          ${s.other ? `<span class="chip">Other ${fmtN(s.other)}</span>` : ""}
-        </div></section>`;
+        const funnel = renderFunnel(m.actionsByState);
+        const trend = renderTrend(m.dailyTrend, cur);
+        const subid = renderBreakdown("Tracking by SubId1", "store / placement / campaign passed on the tracking link", m.bySubId, cur, false);
+        const primary = partnerFocus
+          ? renderBreakdown("Top programs by revenue", "advertisers you promote", m.topPrograms, cur, true)
+          : renderBreakdown("Top affiliates by revenue", "", m.topPartners, cur, true);
+        const props = renderProperties(m.properties);
+        const deals = renderDeals(m.deals, cur);
+        const items = renderCatalog(m.topCatalogItems, cur);
 
-        const trend = renderTrend(m.dailyTrend, m.currency);
-
-        const aff = `<section><h2>Top affiliates by revenue</h2><div class="card scroll"><table>
-          <thead><tr><th>Partner</th><th>Revenue</th><th>Clicks</th><th>Actions</th><th>EPC</th><th>CR</th></tr></thead>
-          <tbody>${(m.topAffiliates || []).map((a) => `<tr>
-            <td>${escapeHtml(a.name || a.mediaId)}</td>
-            <td>${fmtM(a.revenue, m.currency)}</td>
-            <td>${fmtN(a.clicks)}</td>
-            <td>${fmtN(a.actions)}</td>
-            <td>${fmtM2(a.epc, m.currency)}</td>
-            <td>${pct(a.conversionRate)}</td></tr>`).join("") || `<tr><td colspan="6">No partner data yet.</td></tr>`}
-          </tbody></table></div></section>`;
-
-        const items = `<section><h2>Top catalog items</h2><div class="card scroll"><table>
-          <thead><tr><th>Item</th><th>Category</th><th>Price</th></tr></thead>
-          <tbody>${(m.topCatalogItems || []).map((i) => `<tr>
-            <td>${escapeHtml(i.name || i.id)}</td><td>${escapeHtml(i.category || "—")}</td>
-            <td>${i.price != null ? fmtM(i.price, m.currency) : "—"}</td></tr>`).join("") || `<tr><td colspan="3">No catalog data yet.</td></tr>`}
-          </tbody></table></div></section>`;
-
-        root.innerHTML = kpis + states + trend + aff + items;
+        document.getElementById("root").innerHTML = kpis + funnel + trend + subid + primary + props + deals + items;
       }
 
-      function renderTrend(days, currency) {
+      function renderFunnel(s) {
+        const total = (s.approved + s.pending + s.reversed + s.rejected + s.other) || 1;
+        const seg = (n, color) => `<span style="width:${(n / total) * 100}%;background:${color}"></span>`;
+        const chip = (label, n, color) => `<span><span class="dot" style="background:${color}"></span>${label} <b>${fmtN(n)}</b></span>`;
+        return `<section><h2>Action state funnel</h2><div class="card">
+          <div class="funnel">
+            ${seg(s.approved, "var(--pos)")}${seg(s.pending, "var(--pend)")}${seg(s.reversed, "var(--neg)")}${seg(s.rejected, "var(--rej)")}
+          </div>
+          <div class="legend">
+            ${chip("Approved", s.approved, "var(--pos)")}${chip("Pending", s.pending, "var(--pend)")}
+            ${chip("Reversed", s.reversed, "var(--neg)")}${chip("Rejected", s.rejected, "var(--rej)")}
+            ${s.other ? chip("Other", s.other, "var(--muted)") : ""}
+          </div></div></section>`;
+      }
+
+      function renderTrend(days, cur) {
         if (!days || !days.length) return "";
-        const max = Math.max(...days.map((d) => d.revenue), 1);
-        const bars = days.map((d) =>
-          `<div class="bar" title="${d.day}: ${fmtM(d.revenue, currency)} · ${fmtN(d.actions)} actions" style="height:${(d.revenue / max) * 100}%"></div>`,
-        ).join("");
-        const first = days[0].day, last = days[days.length - 1].day;
-        return `<section><h2>Daily revenue trend</h2><div class="card">
-          <div class="bars">${bars}</div><div class="axis"><span>${first}</span><span>${last}</span></div></div></section>`;
+        const W = 640, H = 170, padB = 22, padT = 10, padX = 6;
+        const n = days.length;
+        const maxRev = Math.max(...days.map((d) => d.revenue), 1);
+        const maxClicks = Math.max(...days.map((d) => d.clicks), 1);
+        const bw = (W - padX * 2) / n;
+        const bars = days.map((d, i) => {
+          const h = (d.revenue / maxRev) * (H - padB - padT);
+          const x = padX + i * bw + bw * 0.15;
+          return `<rect x="${x.toFixed(1)}" y="${(H - padB - h).toFixed(1)}" width="${(bw * 0.7).toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="var(--accent)" opacity="0.85"><title>${d.day}: ${fmtM(d.revenue, cur)} · ${fmtN(d.clicks)} clicks</title></rect>`;
+        }).join("");
+        const pts = days.map((d, i) => {
+          const x = padX + i * bw + bw / 2;
+          const y = H - padB - (d.clicks / maxClicks) * (H - padB - padT);
+          return `${x.toFixed(1)},${y.toFixed(1)}`;
+        }).join(" ");
+        return `<section><h2>Daily trend <span class="hint">revenue &amp; clicks</span></h2><div class="card">
+          <svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="daily revenue and clicks">
+            ${bars}
+            <polyline points="${pts}" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-linejoin="round" />
+          </svg>
+          <div class="legend" style="margin-top:8px">
+            <span><span class="dot" style="background:var(--accent)"></span>Revenue</span>
+            <span><span class="dot" style="background:var(--accent2)"></span>Clicks</span>
+            <span class="meta">${days[0].day} → ${days[days.length - 1].day}</span>
+          </div></div></section>`;
       }
 
-      function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+      function renderBreakdown(title, hint, rows, cur, showPayout) {
+        const cols = showPayout
+          ? ["Revenue", "Payout", "Clicks", "Actions", "EPC", "CR"]
+          : ["Revenue", "Clicks", "Actions", "EPC", "CR"];
+        const body = (rows || []).map((r) => `<tr>
+            <td>${esc(r.name || r.key)}</td>
+            <td>${fmtM(r.revenue, cur)}</td>
+            ${showPayout ? `<td>${fmtM(r.payout, cur)}</td>` : ""}
+            <td>${fmtN(r.clicks)}</td><td>${fmtN(r.actions)}</td>
+            <td>${fmtM2(r.epc, cur)}</td><td>${pct(r.conversionRate)}</td></tr>`).join("");
+        const head = `<th>${title.includes("SubId") ? "SubId1" : title.includes("program") ? "Program" : "Partner"}</th>` + cols.map((c) => `<th>${c}</th>`).join("");
+        return `<section><h2>${title}${hint ? ` <span class="hint">${hint}</span>` : ""}</h2>
+          <div class="card scroll"><table><thead><tr>${head}</tr></thead>
+          <tbody>${body || `<tr><td colspan="${cols.length + 1}">No data yet.</td></tr>`}</tbody></table></div></section>`;
+      }
+
+      function renderProperties(props) {
+        if (!props || !props.length) return "";
+        return `<section><h2>Media properties <span class="hint">your tracked sites / apps</span></h2>
+          <div class="cards2">${props.map((p) => `<div class="card mini">
+            <div class="t">${esc(p.name || p.id)}</div>
+            <div class="s">${esc(p.type || "—")} ${p.status ? `· <span class="pill">${esc(p.status)}</span>` : ""}</div>
+          </div>`).join("")}</div></section>`;
+      }
+
+      function renderDeals(deals) {
+        if (!deals || !deals.length) return "";
+        return `<section><h2>Deals <span class="hint">promotions you can run</span></h2>
+          <div class="cards2">${deals.map((d) => `<div class="card mini">
+            <div class="t">${esc(d.name || d.id)}</div>
+            <div class="s">${esc(d.advertiser || "—")}${d.endDate ? ` · ends ${esc(d.endDate)}` : ""}</div>
+          </div>`).join("")}</div></section>`;
+      }
+
+      function renderCatalog(items, cur) {
+        if (!items || !items.length) return "";
+        return `<section><h2>Top catalog items</h2><div class="card scroll"><table>
+          <thead><tr><th>Item</th><th>Category</th><th>Price</th></tr></thead>
+          <tbody>${items.map((i) => `<tr><td>${esc(i.name || i.id)}</td><td>${esc(i.category || "—")}</td>
+            <td>${i.price != null ? fmtM2(i.price, cur) : "—"}</td></tr>`).join("")}</tbody></table></div></section>`;
+      }
 
       function empty() {
         document.getElementById("root").innerHTML =
-          `<div class="empty"><p>No metrics snapshot found.</p>
-           <p>Populate it with:</p>
+          `<div class="empty"><p>No metrics snapshot found.</p><p>Populate it with:</p>
            <p><code>npm run sync</code> &nbsp;then&nbsp; <code>npm run snapshot</code></p>
            <p class="meta">The snapshot writes <code>dashboard/public/metrics.json</code>, which this page reads.</p></div>`;
       }

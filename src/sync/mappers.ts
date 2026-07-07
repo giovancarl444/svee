@@ -7,7 +7,7 @@
  * (see firstOf candidates + VERIFY notes) so a rename upstream degrades to a
  * null key we can spot, rather than silently mis-keying rows.
  */
-import type { Action, Click, MediaPartner, Contract, CatalogItem, ReportRow } from "../types/impact.js";
+import type { Action, Click, MediaPartner, Contract, CatalogItem, ReportRow, MediaProperty, Deal, Campaign } from "../types/impact.js";
 import { toNumber, toDate, toDateOnly, str, firstOf } from "../util/coerce.js";
 import type { Row } from "./db.js";
 
@@ -90,6 +90,48 @@ export function catalogItemToRow(catalogId: string, it: CatalogItem): Row | null
     url: str(it.Url),
     image_url: str(it.ImageUrl),
     raw: it,
+  };
+}
+
+export function programToRow(c: Campaign): Row | null {
+  const id = firstOf(c, ["CampaignId", "Id"]);
+  if (!id) return null;
+  return {
+    campaign_id: id,
+    name: str(c.Name),
+    advertiser_id: firstOf(c, ["AdvertiserId"]),
+    advertiser_name: firstOf(c, ["AdvertiserName"]),
+    status: firstOf(c, ["ContractStatus", "Status"]),
+    raw: c,
+  };
+}
+
+export function mediaPropertyToRow(p: MediaProperty): Row | null {
+  const id = firstOf(p, ["Id"]);
+  if (!id) return null;
+  return {
+    id,
+    name: str(p.Name),
+    type: firstOf(p, ["Type", "PropertyType"]),
+    url: str(p.Url),
+    status: str(p.Status),
+    raw: p,
+  };
+}
+
+export function dealToRow(d: Deal): Row | null {
+  const id = firstOf(d, ["Id"]);
+  if (!id) return null;
+  return {
+    id,
+    name: str(d.Name),
+    campaign_id: firstOf(d, ["CampaignId"]),
+    advertiser_id: firstOf(d, ["AdvertiserId"]),
+    description: str(d.Description),
+    discount_type: str(d.DiscountType),
+    start_date: toDate(d.StartDate),
+    end_date: toDate(d.EndDate),
+    raw: d,
   };
 }
 

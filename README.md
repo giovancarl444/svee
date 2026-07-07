@@ -29,9 +29,10 @@ src/
   client/      http (retry/backoff/jitter/Retry-After) · pagination · deferred jobs
                · persona detect · config · logger (redacting) · façade
   resources/   reports · actions · clicks · partners/programs · catalogs
-               · conversions · tracking-links · unique-urls · promo-codes
+               · media-properties · deals (partner) · conversions
+               · tracking-links · unique-urls · promo-codes
   sync/        schema.sql · idempotent upserts · watermarks · backfill · retention
-               · dashboard metrics
+               · persona-aware dashboard metrics (SubId / program breakdowns)
   webhooks/    postback receiver (signature verify · dedupe · upsert) + Node/Next
   automation/  reconciliation (API vs DB drift) · alerting (EPC drop / reversals)
   scripts/     persona · smoke · sync · backfill · snapshot · reconcile · alerts
@@ -79,10 +80,12 @@ docs/          INTEGRATION_NOTES.md (the memory) · EXTENDING.md
 npx serve dashboard/public      # or: python3 -m http.server --directory dashboard/public
 ```
 
-Mobile-first; renders affiliates-by-revenue, EPC, conversion rate, pending vs
-approved, top catalog items, and a daily-revenue trend
-([preview](docs/dashboard-preview.png)). Deploy the folder to Vercel or any
-static host. The house-stack Next.js route version is documented inline in
+Mobile-first and persona-aware; renders an 8-tile KPI grid (approved revenue,
+pending value, EPC, conversion rate, clicks, actions, payout, reversal rate), an
+action-state funnel, a daily revenue+clicks trend, **SubId1 tracking** (the
+Shopify store/placement dimension), top programs, media properties, deals, and
+top catalog items ([preview](docs/dashboard-preview.png)). Deploy the folder to
+Vercel or any static host. The house-stack Next.js route version is documented inline in
 `src/webhooks/next-route.ts` and `docs/EXTENDING.md`.
 
 ## Cron

@@ -10,8 +10,11 @@ import {
   contractToRow,
   catalogItemToRow,
   reportRowToDaily,
+  mediaPropertyToRow,
+  dealToRow,
+  programToRow,
 } from "./mappers.js";
-import type { Action, Click, MediaPartner, Contract, CatalogItem, ReportRow } from "../types/impact.js";
+import type { Action, Click, MediaPartner, Contract, CatalogItem, ReportRow, MediaProperty, Deal, Campaign } from "../types/impact.js";
 
 function rows<T>(items: T[], map: (t: T) => import("./db.js").Row | null) {
   return items.map(map).filter((r): r is import("./db.js").Row => r !== null);
@@ -34,3 +37,12 @@ export const upsertCatalogItems = (db: Database, catalogId: string, items: Catal
 
 export const upsertDailyPerformance = (db: Database, reportRows: ReportRow[]) =>
   db.upsert("daily_performance", rows(reportRows, reportRowToDaily), ["day", "media_id", "campaign_id"]);
+
+export const upsertMediaProperties = (db: Database, items: MediaProperty[]) =>
+  db.upsert("media_properties", rows(items, mediaPropertyToRow), ["id"]);
+
+export const upsertDeals = (db: Database, items: Deal[]) =>
+  db.upsert("deals", rows(items, dealToRow), ["id"]);
+
+export const upsertPrograms = (db: Database, items: Campaign[]) =>
+  db.upsert("programs", rows(items, programToRow), ["campaign_id"]);

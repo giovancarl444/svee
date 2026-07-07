@@ -165,9 +165,21 @@ export interface Deal {
   Id?: string;
   Name?: string;
   CampaignId?: string;
+  AdvertiserId?: string;
   Description?: string;
+  DiscountType?: string;
   StartDate?: string;
   EndDate?: string;
+  [key: string]: unknown;
+}
+
+/** A partner's own tracked property (website, app, etc.). Partner persona. */
+export interface MediaProperty {
+  Id?: string;
+  Name?: string;
+  Type?: string; // WEBSITE | MOBILE_APP | PAID_SEARCH | ... — VERIFY
+  Url?: string;
+  Status?: string;
   [key: string]: unknown;
 }
 

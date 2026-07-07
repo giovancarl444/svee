@@ -25,6 +25,8 @@ import { ConversionsResource } from "../resources/conversions.js";
 import { TrackingLinksResource } from "../resources/tracking-links.js";
 import { UniqueUrlsResource } from "../resources/unique-urls.js";
 import { PromoCodesResource } from "../resources/promo-codes.js";
+import { MediaPropertiesResource } from "../resources/media-properties.js";
+import { DealsResource } from "../resources/deals.js";
 
 export interface ImpactClientDeps extends Partial<HttpDeps> {
   logger?: Logger;
@@ -46,6 +48,10 @@ export class ImpactClient {
   readonly trackingLinks: TrackingLinksResource;
   readonly uniqueUrls: UniqueUrlsResource;
   readonly promoCodes: PromoCodesResource;
+  /** Partner-persona only. */
+  readonly mediaProperties: MediaPropertiesResource;
+  /** Partner-persona only. */
+  readonly deals: DealsResource;
 
   constructor(config: ImpactConfig, deps: ImpactClientDeps = {}) {
     this.config = config;
@@ -63,6 +69,8 @@ export class ImpactClient {
     this.trackingLinks = new TrackingLinksResource(this.context);
     this.uniqueUrls = new UniqueUrlsResource(this.context);
     this.promoCodes = new PromoCodesResource(this.context);
+    this.mediaProperties = new MediaPropertiesResource(this.context);
+    this.deals = new DealsResource(this.context);
   }
 
   /** Build from environment (.env.local / process.env). */

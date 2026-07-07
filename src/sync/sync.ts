@@ -14,6 +14,9 @@ import {
   upsertContracts,
   upsertCatalogItems,
   upsertDailyPerformance,
+  upsertPrograms,
+  upsertMediaProperties,
+  upsertDeals,
 } from "./upserts.js";
 import { getWatermark, advanceWatermark } from "./watermark.js";
 import { purgeExpired } from "./retention.js";
@@ -97,22 +100,30 @@ export async function runSync(client: ImpactClient, db: Database, options: SyncO
     }, log);
   }
 
-  // --- Relationships (brand persona) ---------------------------------------
+  // --- Relationships / inventory (persona-aware) ---------------------------
+  const syncCatalogs = async () => {
+    const catalogs = await client.catalogs.list();
+    let n = 0;
+    for (const cat of catalogs) {
+      const id = String(cat.Id ?? "");
+      if (!id) continue;
+      n += await drainInBatches(client.catalogs.items(id), batchSize, (b) => upsertCatalogItems(db, id, b));
+    }
+    return n;
+  };
+
   if (client.config.persona === "brand") {
     await runStage(summary, "partners", async () => upsertPartners(db, await client.partners.list()), log);
     await runStage(summary, "contracts", async () => upsertContracts(db, await client.partners.listContracts()), log);
-    await runStage(summary, "catalogs", async () => {
-      const catalogs = await client.catalogs.list();
-      let n = 0;
-      for (const cat of catalogs) {
-        const id = String(cat.Id ?? "");
-        if (!id) continue;
-        n += await drainInBatches(client.catalogs.items(id), batchSize, (b) => upsertCatalogItems(db, id, b));
-      }
-      return n;
-    }, log);
+    await runStage(summary, "catalogs", syncCatalogs, log);
   } else {
-    log("sync: partner persona — skipping brand-only partner/contract/catalog stages", {});
+    // Partner persona: programs (advertiser campaigns), contracts, the partner's
+    // own media properties, deals, and catalogs of programs they promote.
+    await runStage(summary, "programs", async () => upsertPrograms(db, await client.programs.list()), log);
+    await runStage(summary, "contracts", async () => upsertContracts(db, await client.partners.listContracts()), log);
+    await runStage(summary, "media_properties", async () => upsertMediaProperties(db, await client.mediaProperties.list()), log);
+    await runStage(summary, "deals", async () => upsertDeals(db, await client.deals.list()), log);
+    await runStage(summary, "catalogs", syncCatalogs, log);
   }
 
   // --- Actions (incremental) -----------------------------------------------

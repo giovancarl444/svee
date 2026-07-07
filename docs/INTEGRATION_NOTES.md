@@ -43,8 +43,15 @@ npm run gen:types   # generate src/types/generated.ts from the OpenAPI spec
 
 ## 1. Persona (§2)
 
-- **Configured:** `brand` (default). Change `IMPACT_PERSONA` if `npm run persona`
-  detects otherwise — it will print a warning and exit non-zero on mismatch.
+- **Configured:** `partner` (default) — the account owner confirmed a **Partner
+  (publisher)** account, corroborated by the enabled endpoint catalog (Media
+  Properties, Deals, Marketplace Products, Withdrawal Settings, Tax Documents —
+  all partner-only; no "Media Partners" resource, which a brand would have).
+  `npm run persona` will confirm authoritatively once creds are in and warns +
+  exits non-zero on mismatch.
+- Partner-only resources wired: **Media Properties**, **Deals**, **Programs**
+  (Campaigns). The sync + dashboard are persona-aware (programs instead of
+  partners; SubId1 tracking for Shopify stores/placements).
 - **Base paths** (`src/client/persona.ts`):
   - brand → `/Advertisers/{SID}/…`
   - partner → `/Mediapartners/{SID}/…`  ⚠️ VERIFY exact casing
@@ -83,6 +90,8 @@ centralised so corrections are one-line edits. Verify each against the reference
 |---|---|---|---|
 | Persona probe / smoke | `…/Campaigns` | `persona-detect.ts`, `impact-client.ts` | ⬜ |
 | Programs (partner) | `…/Campaigns` | `resources/programs.ts` | ⬜ |
+| Media Properties (partner) | `…/MediaProperties` | `resources/media-properties.ts` | ⬜ |
+| Deals (partner) | `…/Deals` | `resources/deals.ts` | ⬜ |
 | Actions (list/get) | `…/Actions`, `…/Actions/{id}` | `resources/actions.ts` | ⬜ |
 | Clicks | `…/Clicks` | `resources/clicks.ts` | ⬜ |
 | Media partners | `…/MediaPartners` | `resources/partners.ts` | ⬜ |

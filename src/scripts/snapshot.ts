@@ -21,7 +21,7 @@ async function main() {
   }
   const db = createDatabase(config);
   try {
-    const metrics = await computeDashboardMetrics(db, { currency: config.defaultCurrency });
+    const metrics = await computeDashboardMetrics(db, { currency: config.defaultCurrency, persona: config.persona });
     mkdirSync(dirname(OUT), { recursive: true });
     writeFileSync(OUT, JSON.stringify(metrics, null, 2));
     console.log(`Wrote ${OUT}`);

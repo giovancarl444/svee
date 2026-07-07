@@ -6,7 +6,7 @@ const baseEnv = { IMPACT_ACCOUNT_SID: "SID", IMPACT_AUTH_TOKEN: "TOK" };
 describe("loadConfig", () => {
   it("applies documented defaults", () => {
     const c = loadConfig({ env: baseEnv, argv: [] });
-    expect(c.persona).toBe("brand");
+    expect(c.persona).toBe("partner");
     expect(c.apiHost).toBe("https://api.impact.com");
     expect(c.defaultCurrency).toBe("SEK");
     expect(c.defaultTimezone).toBe("Europe/Stockholm");

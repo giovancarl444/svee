@@ -43,5 +43,6 @@ export const DATA_KEYS = {
   reports: "Reports",
   promoCodes: "PromoCodes",
   deals: "Deals",
+  mediaProperties: "MediaProperties", // VERIFY (also seen: "Properties")
   trackingLinks: "TrackingLinks",
 } as const;
