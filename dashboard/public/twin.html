@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SVEE//TWIN — Cortex queue</title>
+    <style>
+      :root {
+        --bg: #0b0d10; --card: #14181d; --line: #232a31; --fg: #e7edf3;
+        --muted: #8a97a5; --accent: #4fd1c5; --warn: #f6c343; --crit: #ff6b6b; --ok: #4ade80;
+      }
+      @media (prefers-color-scheme: light) {
+        :root { --bg: #f6f8fa; --card: #fff; --line: #e3e8ee; --fg: #14181d; --muted: #5b6774; }
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--fg);
+        font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      header { padding: 18px 16px 8px; }
+      h1 { font-size: 17px; margin: 0; letter-spacing: .04em; }
+      .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+      main { padding: 8px 12px 40px; max-width: 760px; margin: 0 auto; }
+      .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 8px; margin: 10px 0 18px; }
+      .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+      .kpi .n { font-size: 22px; font-weight: 650; }
+      .kpi .l { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+      .section-title { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 20px 4px 8px; }
+      .decide { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--warn); border-radius: 10px; padding: 10px 12px; margin: 6px 0; font-size: 14px; }
+      .decide.crit { border-left-color: var(--crit); }
+      .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin: 10px 0; }
+      .row { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+      .role { font-weight: 620; }
+      .co { color: var(--muted); font-size: 13px; }
+      .score { font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+      .pill { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); margin-right: 6px; }
+      .letter { white-space: pre-wrap; background: rgba(127,127,127,.08); border-radius: 8px; padding: 10px; font-size: 13px; margin: 8px 0; }
+      .qa { font-size: 13px; margin: 4px 0; }
+      .qa b { color: var(--muted); font-weight: 500; }
+      .missing { color: var(--warn); font-size: 12.5px; margin-top: 6px; }
+      .action { margin-top: 10px; font-size: 12.5px; color: var(--muted); }
+      .action b { color: var(--fg); }
+      details summary { cursor: pointer; color: var(--accent); font-size: 13px; }
+      .empty { color: var(--muted); padding: 24px; text-align: center; }
+      a { color: var(--accent); }
+      .note { color: var(--muted); font-size: 12px; margin: 4px 0 0; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>SVEE//TWIN</h1>
+      <div class="sub" id="sub">loading the Cortex queue…</div>
+    </header>
+    <main id="app"></main>
+
+    <script>
+      const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+      function kpi(n, l) { return `<div class="kpi"><div class="n">${esc(n)}</div><div class="l">${esc(l)}</div></div>`; }
+
+      function renderDigest(d) {
+        if (!d) return "";
+        const nd = (d.needs_decision || [])
+          .map((x) => `<div class="decide ${/^OFFER/i.test(x) ? "crit" : ""}">${esc(x)}</div>`)
+          .join("");
+        return `
+          <div class="kpis">
+            ${kpi(d.found ?? 0, "found")}${kpi(d.scored ?? 0, "scored")}
+            ${kpi(d.passed_threshold ?? 0, "passed")}${kpi(d.staged ?? 0, "staged")}
+            ${kpi(d.discarded_low_fit ?? 0, "discarded")}
+          </div>
+          ${nd ? `<div class="section-title">Needs a decision</div>${nd}` : ""}`;
+      }
+
+      function renderApproval(a) {
+        const p = a.payload || {};
+        const qa = (p.screening_answers || [])
+          .map((x) => `<div class="qa"><b>${esc(x.q)}</b> — ${esc(x.a)}</div>`).join("");
+        const miss = (p.missing_fields || []).length
+          ? `<div class="missing">⚠ needs: ${(p.missing_fields || []).map(esc).join("; ")}</div>` : "";
+        const letter = p.cover_letter ? `<div class="letter">${esc(p.cover_letter)}</div>` : "";
+        return `
+          <div class="card">
+            <div class="row">
+              <div><div class="role">${esc(a.role)}</div><div class="co">${esc(a.company)}</div></div>
+              <div class="score">${esc(a.fit_score ?? "")}</div>
+            </div>
+            <div style="margin:6px 0"><span class="pill">${esc(a.type)}</span><span class="pill">${esc(a.channel)}</span>${a.cv_variant ? `<span class="pill">CV ${esc(a.cv_variant)}</span>` : ""}</div>
+            <details><summary>Review package</summary>${letter}${qa}</details>
+            ${miss}
+            <div class="action">On approve: <b>${esc(a.action_on_approve)}</b></div>
+            ${a.url ? `<div class="note"><a href="${esc(a.url)}" target="_blank" rel="noreferrer">open posting ↗</a></div>` : ""}
+          </div>`;
+      }
+
+      async function load() {
+        try {
+          const r = await fetch("/api/twin-queue", { headers: { accept: "application/json" } });
+          if (!r.ok) throw new Error("API " + r.status);
+          const { digest, approvals } = await r.json();
+          document.getElementById("sub").textContent =
+            digest ? `last run ${new Date(digest.run_at).toLocaleString()}` : "no runs yet";
+          const q = (approvals || [])
+            .map((row) => renderApproval(row.type ? row : { ...row }))
+            .join("");
+          document.getElementById("app").innerHTML =
+            renderDigest(digest) +
+            `<div class="section-title">Pending approvals (${(approvals || []).length}) — tap to approve in Cortex</div>` +
+            (q || `<div class="empty">Queue is clear. Nothing staged.</div>`);
+        } catch (e) {
+          document.getElementById("sub").textContent = "";
+          document.getElementById("app").innerHTML =
+            `<div class="empty">Couldn't reach <code>/api/twin-queue</code>.<br>Deploy with DB + DATABASE_URL, run <code>npm run twin:run</code>, then reload.<br><span class="note">${esc(e.message)}</span></div>`;
+        }
+      }
+      load();
+    </script>
+  </body>
+</html>
