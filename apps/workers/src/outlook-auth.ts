@@ -42,6 +42,7 @@ async function main(): Promise<void> {
     console.log('Approve there — CORTEX captures the code automatically (you paste nothing).\n');
     const { code, redirectUri } = await captureAuthCode({
       host: 'localhost', // Microsoft loopback expects the localhost host
+      path: '/', // must match the registered `http://localhost` (no path) — Azure matches path exactly, port loosely
       buildAuthUrl: (redir) => microsoftAuthUrl({ clientId, redirectUri: redir, tenant: env.OUTLOOK_TENANT }),
       onReady: (url) => console.log(`If the browser didn't open, visit:\n  ${url}\n`),
     });

@@ -44,6 +44,12 @@ export interface ImapConfig {
    */
   accessToken?: string | (() => Promise<string>);
   mailbox?: string;
+  /**
+   * On the FIRST sync (no checkpoint), fetch only the most-recent N messages
+   * instead of the entire mailbox — the "smallest slice first" bound for large
+   * inboxes (e.g. Outlook). Absent ⇒ full backfill.
+   */
+  firstRunLimit?: number;
 }
 
 /** Resolve the imapflow auth block from config — password OR XOAUTH2 token. */
@@ -119,10 +125,15 @@ export function makeImapFetcher(config: ImapConfig): ImapFetcher {
       try {
         const lock = await client.getMailboxLock(mailbox);
         try {
-          const mb = client.mailbox as { uidValidity: bigint };
+          const mb = client.mailbox as { uidValidity: bigint; uidNext?: number };
           const uidValidity = String(mb.uidValidity);
           // UIDVALIDITY change ⇒ server renumbered UIDs; nothing but a full resync is safe.
           let lastSeenUid = cp.uidValidity === uidValidity ? (cp.lastSeenUid ?? 0) : 0;
+          // First sync of a large mailbox: start near the top so we ingest only the
+          // most-recent `firstRunLimit` messages instead of the whole inbox.
+          if (lastSeenUid === 0 && config.firstRunLimit && config.firstRunLimit > 0 && mb.uidNext) {
+            lastSeenUid = Math.max(0, mb.uidNext - 1 - config.firstRunLimit);
+          }
 
           for await (const msg of client.fetch(
             `${lastSeenUid + 1}:*`,

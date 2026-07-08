@@ -69,6 +69,9 @@ const EnvSchema = z.object({
   IMAP_PORT: z.coerce.number().int().default(993),
   IMAP_USER: z.string().optional(),
   IMAP_PASSWORD: z.string().optional(),
+  // First-run cap: ingest only the most-recent N messages on the initial IMAP
+  // backfill (smallest-slice-first for large inboxes like Outlook). Absent = all.
+  IMAP_BACKFILL_MAX: z.coerce.number().int().positive().optional(),
 
   // Outlook.com / Microsoft 365 — IMAP over OAuth (basic auth is dead in 2026).
   // Registered in the same single non-Gmail IMAP slot; preferred over IMAP_* when set.

@@ -89,6 +89,7 @@ export function wireAdapters(): void {
       port: OUTLOOK_IMAP_PORT,
       user: env.OUTLOOK_USER,
       accessToken: getToken,
+      ...(env.IMAP_BACKFILL_MAX ? { firstRunLimit: env.IMAP_BACKFILL_MAX } : {}),
     });
     registerAdapter(new ImapAdapter({ fetcher, store: dbCheckpointStore }));
     log.info({ user: env.OUTLOOK_USER }, 'adapters: outlook registered (IMAP over OAuth, read-only)');
@@ -101,6 +102,7 @@ export function wireAdapters(): void {
       port: env.IMAP_PORT,
       user: env.IMAP_USER,
       pass: env.IMAP_PASSWORD,
+      ...(env.IMAP_BACKFILL_MAX ? { firstRunLimit: env.IMAP_BACKFILL_MAX } : {}),
     });
     registerAdapter(new ImapAdapter({ fetcher, store: dbCheckpointStore }));
     log.info({ host: env.IMAP_HOST }, 'adapters: imap registered');
