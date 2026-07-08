@@ -45,10 +45,13 @@ export class GmailAdapter implements SourceAdapter {
   #api: GmailApi;
   #store: CheckpointStore;
   #pending: GmailCheckpoint | null = null;
+  /** First-run backfill query. Override (e.g. `newer_than:2d`) for a smaller first slice. */
+  #backfillQuery: string;
 
-  constructor(deps: { api: GmailApi; store: CheckpointStore }) {
+  constructor(deps: { api: GmailApi; store: CheckpointStore; backfillQuery?: string }) {
     this.#api = deps.api;
     this.#store = deps.store;
+    this.#backfillQuery = deps.backfillQuery?.trim() || BACKFILL_QUERY;
   }
 
   async getCheckpoint(): Promise<Checkpoint> {
@@ -104,7 +107,7 @@ export class GmailAdapter implements SourceAdapter {
     let pageToken: string | undefined;
     do {
       const res = await this.#api.listMessageIds({
-        q: BACKFILL_QUERY,
+        q: this.#backfillQuery,
         maxResults: 500,
         ...(pageToken ? { pageToken } : {}),
       });

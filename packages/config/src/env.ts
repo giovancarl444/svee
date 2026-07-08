@@ -60,6 +60,9 @@ const EnvSchema = z.object({
   GMAIL_REDIRECT_URI: z.string().optional(),
   GMAIL_REFRESH_TOKEN: z.string().optional(),
   GMAIL_PUBSUB_TOPIC: z.string().optional(),
+  // First-run backfill window/query (e.g. '(in:inbox OR in:sent) newer_than:2d')
+  // to ingest a small slice before widening. Defaults to 30d in the adapter.
+  GMAIL_BACKFILL_QUERY: z.string().optional(),
 
   // IMAP (Phase 1/3) — generic password-auth mailbox.
   IMAP_HOST: z.string().optional(),

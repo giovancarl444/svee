@@ -58,7 +58,13 @@ export function wireAdapters(): void {
 
   if (googleReady) {
     const api = makeGmailApi(authedClient(env.GMAIL_REFRESH_TOKEN!));
-    registerAdapter(new GmailAdapter({ api, store: dbCheckpointStore }));
+    registerAdapter(
+      new GmailAdapter({
+        api,
+        store: dbCheckpointStore,
+        ...(env.GMAIL_BACKFILL_QUERY ? { backfillQuery: env.GMAIL_BACKFILL_QUERY } : {}),
+      }),
+    );
     log.info('adapters: gmail registered');
 
     // Calendar reuses the same Google refresh token (consented with the calendar scope).

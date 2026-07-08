@@ -59,6 +59,8 @@ pnpm --filter @cortex/workers synthesize   # your first REAL Tomorrow Plan
 
 I ingest the **smallest useful slice first** (recent window / one label), we eyeball it together, then widen only if you want. Real data is shown to you, never committed or screenshotted.
 
+The slice size is controlled by `GMAIL_BACKFILL_QUERY` in `.env` (e.g. `(in:inbox OR in:sent) newer_than:2d` for a first run; widen to `7d`/`30d`, or a single `label:` — then clear the gmail row in `connectors` and re-sync to re-backfill). Absent, the adapter defaults to 30 days.
+
 ## Adding the next source later (~2 min)
 Put its creds in `.env` → `run doctor` (must be green) → `sync`. That's it. The adapters self-register from env; a source with no creds is simply skipped.
 
