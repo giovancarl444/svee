@@ -18,6 +18,7 @@ import {
   upsertDeals,
 } from "./upserts.js";
 import { rebuildDailyPerformance } from "./daily.js";
+import { isImpactError } from "../client/errors.js";
 import { getWatermark, advanceWatermark } from "./watermark.js";
 import { purgeExpired } from "./retention.js";
 import { toDate } from "../util/coerce.js";
@@ -27,6 +28,8 @@ export interface StageResult {
   stage: string;
   upserted: number;
   ok: boolean;
+  /** True when an optional resource was unavailable (403) and skipped, not failed. */
+  skipped?: boolean;
   error?: string;
 }
 
@@ -55,12 +58,20 @@ async function runStage(
   stage: string,
   fn: () => Promise<number>,
   log: (msg: string, f?: Record<string, unknown>) => void,
+  opts: { optional?: boolean } = {},
 ): Promise<void> {
   try {
     const upserted = await fn();
     summary.stages.push({ stage, upserted, ok: true });
     log(`sync stage ok: ${stage}`, { upserted });
   } catch (err) {
+    // An optional resource the account isn't scoped for (403) is skipped, not
+    // failed — it must not sink the whole sync (and the cron exit code).
+    if (opts.optional && isImpactError(err) && err.kind === "forbidden") {
+      summary.stages.push({ stage, upserted: 0, ok: true, skipped: true, error: (err as Error).message });
+      log(`sync stage skipped (not available for this account): ${stage}`, {});
+      return;
+    }
     summary.stages.push({ stage, upserted: 0, ok: false, error: (err as Error).message });
     log(`sync stage FAILED: ${stage}`, { error: (err as Error).message });
   }
@@ -112,18 +123,21 @@ export async function runSync(client: ImpactClient, db: Database, options: SyncO
     return n;
   };
 
+  const optional = { optional: true };
   if (client.config.persona === "brand") {
     await runStage(summary, "partners", async () => upsertPartners(db, await client.partners.list()), log);
-    await runStage(summary, "contracts", async () => upsertContracts(db, await client.partners.listContracts()), log);
-    await runStage(summary, "catalogs", syncCatalogs, log);
+    await runStage(summary, "contracts", async () => upsertContracts(db, await client.partners.listContracts()), log, optional);
+    await runStage(summary, "catalogs", syncCatalogs, log, optional);
   } else {
     // Partner persona: programs (advertiser campaigns), contracts, the partner's
     // own media properties, deals, and catalogs of programs they promote.
+    // The relationship/inventory extras are optional — a 403 (resource not
+    // scoped for this key) skips rather than failing the whole sync.
     await runStage(summary, "programs", async () => upsertPrograms(db, await client.programs.list()), log);
-    await runStage(summary, "contracts", async () => upsertContracts(db, await client.partners.listContracts()), log);
-    await runStage(summary, "media_properties", async () => upsertMediaProperties(db, await client.mediaProperties.list()), log);
-    await runStage(summary, "deals", async () => upsertDeals(db, await client.deals.list()), log);
-    await runStage(summary, "catalogs", syncCatalogs, log);
+    await runStage(summary, "contracts", async () => upsertContracts(db, await client.partners.listContracts()), log, optional);
+    await runStage(summary, "media_properties", async () => upsertMediaProperties(db, await client.mediaProperties.list()), log, optional);
+    await runStage(summary, "deals", async () => upsertDeals(db, await client.deals.list()), log, optional);
+    await runStage(summary, "catalogs", syncCatalogs, log, optional);
   }
 
   // --- Actions (incremental) -----------------------------------------------

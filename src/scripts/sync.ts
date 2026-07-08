@@ -24,7 +24,7 @@ async function main() {
     console.log(JSON.stringify(summary, null, 2));
     console.log(
       `\nSync ${failed.length ? "completed WITH ERRORS" : "OK"} — ` +
-        summary.stages.map((s) => `${s.stage}:${s.ok ? s.upserted : "ERR"}`).join("  "),
+        summary.stages.map((s) => `${s.stage}:${s.skipped ? "SKIP" : s.ok ? s.upserted : "ERR"}`).join("  "),
     );
     process.exit(failed.length ? 1 : 0);
   } finally {
