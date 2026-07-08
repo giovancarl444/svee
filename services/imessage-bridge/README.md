@@ -51,8 +51,13 @@ checkpoints on).
 
 ## Notes / limitations
 
-- Contact names live in AddressBook, not `chat.db`, so `displayName` is empty and
-  CORTEX shows the phone/email handle. Entity naming can be enriched later.
+- `displayName` is enriched from **macOS Contacts** (AddressBook), strictly
+  read-only. At startup the bridge builds a cached handle→name index from
+  `~/Library/Application Support/AddressBook/**/AddressBook-v22.abcddb` (opened
+  `mode=ro&immutable=1`), matching phone handles on their last digits (so `+46 70…`
+  and `070…` collapse) and emails case-insensitively. Unknown handles keep the raw
+  phone/email, exactly as before. A missing/locked Contacts DB is non-fatal — names
+  just stay blank. This needs the same Full Disk Access as reading `chat.db`.
 - Newer macOS often stores message text in the `attributedBody` typedstream blob
   rather than the `text` column; the bridge best-effort-extracts it. Attachment-
   only / reaction rows (no text) are skipped.

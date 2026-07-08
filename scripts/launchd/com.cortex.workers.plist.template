@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  CORTEX always-on scheduler (`pnpm --filter @cortex/workers serve`) as a
+  per-user LaunchAgent.
+
+  This is a TEMPLATE. Do NOT edit ~/Library/LaunchAgents copies by hand; run
+  scripts/install-service.sh, which substitutes __CORTEX_REPO__ / __CORTEX_HOME__
+  and installs the result. No secret ever lives here — the app loads .env itself
+  via loadLocalEnv().
+
+  It runs a wrapper (scripts/launchd/run-workers.sh) that sources the login shell
+  so PATH/pnpm/node resolve exactly as they do in an interactive terminal. It
+  depends on the docker Postgres (127.0.0.1:5432) and Ollama (127.0.0.1:11434)
+  being reachable; ThrottleInterval + KeepAlive make it retry until they are.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.cortex.workers</string>
+
+    <!-- Wrapper sources the login shell, cds to the repo, and execs the serve
+         scheduler. Argument-form (not a shell string) so paths with spaces work. -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>__CORTEX_REPO__/scripts/launchd/run-workers.sh</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>__CORTEX_REPO__</string>
+
+    <!-- Keep it alive across crashes, logout, and reboot (agent reloads at login). -->
+    <key>KeepAlive</key>
+    <true/>
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- If docker/Ollama aren't up yet at boot, serve exits and launchd waits
+         ~30s before relaunching instead of hammering in a tight loop. -->
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+
+    <!-- A minimal PATH so even before the login shell is sourced launchd can find
+         a base toolchain; run-workers.sh then layers the full login PATH on top. -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>__CORTEX_HOME__/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>HOME</key>
+        <string>__CORTEX_HOME__</string>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>__CORTEX_REPO__/demo/logs/workers.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>__CORTEX_REPO__/demo/logs/workers.err.log</string>
+
+    <!-- Nice-to-have: don't peg the machine if the scheduler is busy. -->
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>

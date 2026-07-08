@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  CORTEX read-only iMessage bridge (services/imessage-bridge/bridge.py) as a
+  per-user LaunchAgent.
+
+  This is a TEMPLATE. Do NOT edit ~/Library/LaunchAgents copies by hand; run
+  scripts/install-service.sh, which substitutes __CORTEX_REPO__ / __CORTEX_HOME__
+  and installs the result.
+
+  IMPORTANT: the IMESSAGE_BRIDGE_TOKEN is NEVER baked into this plist. The wrapper
+  (scripts/launchd/run-bridge.sh) greps it out of the repo's .env at RUNTIME and
+  exports it before exec-ing bridge.py. That keeps the secret out of any committed
+  or installed file.
+
+  Prerequisite: whatever runs bridge.py needs Full Disk Access to read
+  ~/Library/Messages/chat.db. Since launchd started it, grant Full Disk Access to
+  the wrapper/python (see docs/RUNNING.md).
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.cortex.bridge</string>
+
+    <!-- Wrapper sources the login shell, loads IMESSAGE_BRIDGE_TOKEN from .env,
+         and execs `python3 services/imessage-bridge/bridge.py`. -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>__CORTEX_REPO__/scripts/launchd/run-bridge.sh</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>__CORTEX_REPO__</string>
+
+    <key>KeepAlive</key>
+    <true/>
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Retry politely if it dies immediately (e.g. token missing at first boot). -->
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>__CORTEX_HOME__/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>HOME</key>
+        <string>__CORTEX_HOME__</string>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>__CORTEX_REPO__/demo/logs/bridge.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>__CORTEX_REPO__/demo/logs/bridge.err.log</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>

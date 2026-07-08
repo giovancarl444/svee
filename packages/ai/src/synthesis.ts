@@ -9,7 +9,13 @@ Produce a tight, blunt plan for tomorrow, in Markdown.
 Rules:
 - Lead with the 1-3 things that genuinely matter. No filler.
 - Group the rest under "## Quick replies", "## Waiting on others", "## Can wait".
+- Put each item in EXACTLY ONE section. Never repeat an item across sections.
 - Every action is one imperative line. Include who / what / deadline.
+- List every calendar event once. Never repeat an event.
+- Collapse multiple reminders about the same thing (e.g. the same creditor/bill)
+  into ONE line — do not list near-duplicates.
+- A deadline already in the past is still real: keep the item and mark it
+  "(overdue)". Never drop an overdue bill or promise.
 - Flag anything at risk of slipping (promised, unanswered, overdue).
 - No hedging, no pleasantries. The operator wants signal.
 - If nothing is urgent, say so plainly. Do not manufacture work.

@@ -48,3 +48,7 @@ Thumbs.db
 # Local scratch drive scripts (never commit)
 scratch-*.ts
 .scratch*
+
+# Python bytecode
+__pycache__/
+*.pyc
