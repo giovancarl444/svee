@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getPriorityItems } from '@/lib/queries';
+import { getDeepLinkMap, getPriorityItems } from '@/lib/queries';
 import { fmtDateTime } from '@/lib/format';
 import { EmptyState } from '@/app/components/EmptyState';
 import { SectionHeader } from '@/app/components/Section';
@@ -9,6 +9,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function TodayPage() {
   const rows = await getPriorityItems();
+  const links = await getDeepLinkMap(rows.map((r) => r.id));
   const count = rows.length;
 
   return (
@@ -38,6 +39,16 @@ export default async function TodayPage() {
                 </p>
               </Link>
               <div className="flex gap-4 pt-2 pb-4">
+                {links.get(r.id) ? (
+                  <a
+                    href={links.get(r.id) ?? '#'}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="tab-index hover:text-ink"
+                  >
+                    ↗ open
+                  </a>
+                ) : null}
                 <form action={doneAction}>
                   <input type="hidden" name="id" value={r.id} />
                   <button type="submit" className="tab-index hover:text-ink">

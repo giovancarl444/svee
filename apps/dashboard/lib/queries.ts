@@ -11,9 +11,35 @@ import {
   PRIORITY_ROLLUP_SQL,
   type PriorityRow,
 } from '@cortex/db';
-import { desc, eq, sql } from 'drizzle-orm';
+import { desc, eq, inArray, sql } from 'drizzle-orm';
+import { sourceDeepLink } from './deep-link';
 
 export type { PriorityRow };
+
+/**
+ * "Open the real thing" URLs for a set of items, keyed by id. Kept as a separate
+ * lookup so the (tested) priority rollup SQL stays untouched. Read-only — just
+ * builds links to the source apps.
+ */
+export async function getDeepLinkMap(ids: string[]): Promise<Map<string, string | null>> {
+  if (ids.length === 0) return new Map();
+  try {
+    const rows = await getDb()
+      .select({
+        id: items.id,
+        source: items.source,
+        sourceItemId: items.sourceItemId,
+        senderHandle: sql<string | null>`(${entities.handles} -> 0 ->> 'value')`,
+        calendarUrl: sql<string | null>`(${items.raw} ->> 'htmlLink')`,
+      })
+      .from(items)
+      .leftJoin(entities, eq(items.senderIdentity, entities.id))
+      .where(inArray(items.id, ids));
+    return new Map(rows.map((r) => [r.id, sourceDeepLink(r)]));
+  } catch {
+    return new Map();
+  }
+}
 
 /**
  * Every query is wrapped so the dashboard renders cleanly even when the DB is
