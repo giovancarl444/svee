@@ -1,0 +1,16 @@
+{
+  "name": "@cortex/imessage",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@cortex/config": "workspace:*",
+    "@cortex/core": "workspace:*"
+  }
+}

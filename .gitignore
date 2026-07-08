@@ -1,35 +1,41 @@
-# Secrets — NEVER commit real credentials
+# Secrets — NEVER commit real credentials (Constraint §3)
 .env
 .env.local
 .env.*.local
 *.env.local
+secrets/
 .mcp-auth/
 
-# Node
+# Dependencies
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
+.pnpm-store/
 
 # Build output
 dist/
 build/
 *.tsbuildinfo
+.next/
+out/
+next-env.d.ts
 
-# Next.js (dashboard)
-dashboard/.next/
-dashboard/out/
-dashboard/node_modules/
+# Runtime / data — the message store never lives in the repo
+data/
+pgdata/
+*.sqlite
+*.sqlite-*
+
+# OAuth / session artifacts (WhatsApp linked-device, Gmail tokens on disk)
+.auth/
+wa-session/
+
+# Go build output + local sqlite (WhatsApp bridge)
+/services/whatsapp-bridge/wa-bridge
+/services/whatsapp-bridge/whatsapp-bridge
+/services/whatsapp-bridge/*.db
 
 # Test / coverage
 coverage/
 .vitest/
-
-# Generated data snapshots (may contain PII-adjacent aggregates)
-dashboard/public/metrics.json
-data/exports/
-*.deferred.csv
 
 # OS / editor
 .DS_Store
@@ -37,3 +43,12 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+*.log
+
+# Local scratch drive scripts (never commit)
+scratch-*.ts
+.scratch*
+
+# Python bytecode
+__pycache__/
+*.pyc

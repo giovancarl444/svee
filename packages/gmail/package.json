@@ -1,0 +1,17 @@
+{
+  "name": "@cortex/gmail",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@cortex/config": "workspace:*",
+    "@cortex/core": "workspace:*",
+    "googleapis": "173.0.0"
+  }
+}

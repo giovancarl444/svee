@@ -1,39 +1,37 @@
 {
-  "name": "impact-integration",
-  "version": "0.1.0",
+  "name": "cortex",
+  "version": "0.0.0",
   "private": true,
-  "description": "Production-grade, typed, resilient integration layer for the impact.com platform (brand/partner/agency personas).",
   "type": "module",
+  "description": "CORTEX — a single-operator personal brain. Ingests every channel into one normalized store, triages with Claude, surfaces only what needs a human, and writes a nightly plan.",
+  "packageManager": "pnpm@10.33.0",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "persona": "tsx src/scripts/detect-persona.ts",
-    "smoke": "tsx src/scripts/smoke-test.ts",
-    "migrate": "tsx src/scripts/migrate.ts",
-    "sync": "tsx src/scripts/sync.ts",
-    "backfill": "tsx src/scripts/backfill.ts",
-    "reconcile": "tsx src/scripts/reconcile.ts",
-    "alerts": "tsx src/scripts/alerts.ts",
-    "snapshot": "tsx src/scripts/snapshot.ts",
-    "gen:types": "tsx src/scripts/gen-types.ts",
-    "webhook": "tsx src/webhooks/server.ts"
-  },
-  "dependencies": {
-    "dotenv": "^16.4.5",
-    "pg": "^8.13.1",
-    "zod": "^3.24.1"
+    "dev": "pnpm --filter @cortex/dashboard dev",
+    "build": "pnpm --filter @cortex/dashboard build",
+    "start:dashboard": "pnpm --filter @cortex/dashboard start",
+    "start:workers": "pnpm --filter @cortex/workers start",
+    "typecheck": "tsc --noEmit -p tsconfig.json && pnpm --filter @cortex/dashboard typecheck",
+    "test": "pnpm -r --if-present test",
+    "db:generate": "pnpm --filter @cortex/db generate",
+    "db:migrate": "pnpm --filter @cortex/db migrate",
+    "db:studio": "pnpm --filter @cortex/db studio",
+    "db:check": "pnpm --filter @cortex/db check"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.5.4",
-    "@types/node": "^22.10.5",
-    "@types/pg": "^8.11.10",
-    "tsx": "^4.19.2",
-    "typescript": "^5.7.3",
-    "vitest": "^2.1.8"
+    "@types/node": "26.1.0",
+    "tsx": "4.23.0",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@tailwindcss/oxide",
+      "unrs-resolver",
+      "sharp"
+    ]
   }
 }

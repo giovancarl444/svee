@@ -1,0 +1,460 @@
+{
+  "baseUrl": "http://localhost:11434/v1",
+  "itemCount": 26,
+  "scores": [
+    {
+      "model": "qwen2.5:7b-instruct",
+      "note": "pipeline default (non-reasoning instruct)",
+      "attempted": 26,
+      "validOutputs": 25,
+      "categoryCorrect": 16,
+      "urgencyWithin1": 23,
+      "failures": 1,
+      "avgLatencyMs": 3639,
+      "totalTokens": 15874,
+      "costUsd": 0,
+      "perItem": [
+        {
+          "id": "g-lease-001",
+          "expected": "action_required",
+          "predicted": "action_required",
+          "correct": true,
+          "ms": 4377
+        },
+        {
+          "id": "g-invoice-002",
+          "expected": "financial",
+          "predicted": "financial",
+          "correct": true,
+          "ms": 4259
+        },
+        {
+          "id": "g-passport-003",
+          "expected": "action_required",
+          "predicted": "action_required",
+          "correct": true,
+          "ms": 4664
+        },
+        {
+          "id": "g-contract-004",
+          "expected": "awaiting_reply",
+          "predicted": "action_required",
+          "correct": false,
+          "ms": 4071
+        },
+        {
+          "id": "g-news-005",
+          "expected": "newsletter_promo",
+          "predicted": "newsletter_promo",
+          "correct": true,
+          "ms": 2942
+        },
+        {
+          "id": "g-promo-006",
+          "expected": "newsletter_promo",
+          "predicted": "fyi",
+          "correct": false,
+          "ms": 3643
+        },
+        {
+          "id": "g-receipt-007",
+          "expected": "fyi",
+          "predicted": "fyi",
+          "correct": true,
+          "ms": 2691
+        },
+        {
+          "id": "i-deck-101",
+          "expected": "action_required",
+          "predicted": "action_required",
+          "correct": true,
+          "ms": 4723
+        },
+        {
+          "id": "i-review-102",
+          "expected": "awaiting_reply",
+          "predicted": "action_required",
+          "correct": false,
+          "ms": 3517
+        },
+        {
+          "id": "i-it-103",
+          "expected": "action_required",
+          "predicted": "scheduling",
+          "correct": false,
+          "ms": 3965
+        },
+        {
+          "id": "i-allhands-104",
+          "expected": "newsletter_promo",
+          "predicted": "fyi",
+          "correct": false,
+          "ms": 2795
+        },
+        {
+          "id": "i-1on1-105",
+          "expected": "fyi",
+          "predicted": "fyi",
+          "correct": true,
+          "ms": 2722
+        },
+        {
+          "id": "w-dinner-201",
+          "expected": "scheduling",
+          "predicted": "action_required",
+          "correct": false,
+          "ms": 4434
+        },
+        {
+          "id": "w-plumber-202",
+          "expected": "action_required",
+          "predicted": "action_required",
+          "correct": true,
+          "ms": 4026
+        },
+        {
+          "id": "w-photo-203",
+          "expected": "personal",
+          "predicted": "fyi",
+          "correct": false,
+          "ms": 2787
+        },
+        {
+          "id": "w-loan-204",
+          "expected": "awaiting_reply",
+          "predicted": "awaiting_reply",
+          "correct": true,
+          "ms": 3244
+        },
+        {
+          "id": "c-standup-301",
+          "expected": "scheduling",
+          "predicted": "scheduling",
+          "correct": true,
+          "ms": 3908
+        },
+        {
+          "id": "c-dentist-302",
+          "expected": "scheduling",
+          "predicted": "scheduling",
+          "correct": true,
+          "ms": 4712
+        },
+        {
+          "id": "g-tax-008",
+          "expected": "action_required",
+          "predicted": "action_required",
+          "correct": true,
+          "ms": 5501
+        },
+        {
+          "id": "g-bank-009",
+          "expected": "financial",
+          "predicted": "scheduling",
+          "correct": false,
+          "ms": 3125
+        },
+        {
+          "id": "g-spam-010",
+          "expected": "spam_noise",
+          "predicted": "spam_noise",
+          "correct": true,
+          "ms": 2680
+        },
+        {
+          "id": "i-conf-106",
+          "expected": "action_required",
+          "predicted": "action_required",
+          "correct": true,
+          "ms": 3929
+        },
+        {
+          "id": "g-fyi-011",
+          "expected": "fyi",
+          "predicted": null,
+          "correct": false,
+          "ms": 2723
+        },
+        {
+          "id": "w-fyi-205",
+          "expected": "fyi",
+          "predicted": "fyi",
+          "correct": true,
+          "ms": 2667
+        },
+        {
+          "id": "i-promo-107",
+          "expected": "newsletter_promo",
+          "predicted": "scheduling",
+          "correct": false,
+          "ms": 3530
+        },
+        {
+          "id": "g-reply-012",
+          "expected": "awaiting_reply",
+          "predicted": "awaiting_reply",
+          "correct": true,
+          "ms": 2972
+        }
+      ]
+    },
+    {
+      "model": "gemma3:4b",
+      "note": "smaller/faster alternative",
+      "attempted": 26,
+      "validOutputs": 24,
+      "categoryCorrect": 15,
+      "urgencyWithin1": 21,
+      "failures": 2,
+      "avgLatencyMs": 3558,
+      "totalTokens": 13938,
+      "costUsd": 0,
+      "perItem": [
+        {
+          "id": "g-lease-001",
+          "expected": "action_required",
+          "predicted": "financial",
+          "correct": false,
+          "ms": 29771
+        },
+        {
+          "id": "g-invoice-002",
+          "expected": "financial",
+          "predicted": "financial",
+          "correct": true,
+          "ms": 3771
+        },
+        {
+          "id": "g-passport-003",
+          "expected": "action_required",
+          "predicted": "action_required",
+          "correct": true,
+          "ms": 2949
+        },
+        {
+          "id": "g-contract-004",
+          "expected": "awaiting_reply",
+          "predicted": "action_required",
+          "correct": false,
+          "ms": 2708
+        },
+        {
+          "id": "g-news-005",
+          "expected": "newsletter_promo",
+          "predicted": "newsletter_promo",
+          "correct": true,
+          "ms": 1729
+        },
+        {
+          "id": "g-promo-006",
+          "expected": "newsletter_promo",
+          "predicted": "newsletter_promo",
+          "correct": true,
+          "ms": 2293
+        },
+        {
+          "id": "g-receipt-007",
+          "expected": "fyi",
+          "predicted": "fyi",
+          "correct": true,
+          "ms": 2079
+        },
+        {
+          "id": "i-deck-101",
+          "expected": "action_required",
+          "predicted": "scheduling",
+          "correct": false,
+          "ms": 2772
+        },
+        {
+          "id": "i-review-102",
+          "expected": "awaiting_reply",
+          "predicted": "action_required",
+          "correct": false,
+          "ms": 2983
+        },
+        {
+          "id": "i-it-103",
+          "expected": "action_required",
+          "predicted": "action_required",
+          "correct": true,
+          "ms": 2567
+        },
+        {
+          "id": "i-allhands-104",
+          "expected": "newsletter_promo",
+          "predicted": "fyi",
+          "correct": false,
+          "ms": 1776
+        },
+        {
+          "id": "i-1on1-105",
+          "expected": "fyi",
+          "predicted": "awaiting_reply",
+          "correct": false,
+          "ms": 1927
+        },
+        {
+          "id": "w-dinner-201",
+          "expected": "scheduling",
+          "predicted": "scheduling",
+          "correct": true,
+          "ms": 2504
+        },
+        {
+          "id": "w-plumber-202",
+          "expected": "action_required",
+          "predicted": "action_required",
+          "correct": true,
+          "ms": 2543
+        },
+        {
+          "id": "w-photo-203",
+          "expected": "personal",
+          "predicted": "fyi",
+          "correct": false,
+          "ms": 1672
+        },
+        {
+          "id": "w-loan-204",
+          "expected": "awaiting_reply",
+          "predicted": "awaiting_reply",
+          "correct": true,
+          "ms": 1925
+        },
+        {
+          "id": "c-standup-301",
+          "expected": "scheduling",
+          "predicted": "scheduling",
+          "correct": true,
+          "ms": 3235
+        },
+        {
+          "id": "c-dentist-302",
+          "expected": "scheduling",
+          "predicted": "scheduling",
+          "correct": true,
+          "ms": 3164
+        },
+        {
+          "id": "g-tax-008",
+          "expected": "action_required",
+          "predicted": "financial",
+          "correct": false,
+          "ms": 3115
+        },
+        {
+          "id": "g-bank-009",
+          "expected": "financial",
+          "predicted": "financial",
+          "correct": true,
+          "ms": 2621
+        },
+        {
+          "id": "g-spam-010",
+          "expected": "spam_noise",
+          "predicted": null,
+          "correct": false,
+          "ms": 2200
+        },
+        {
+          "id": "i-conf-106",
+          "expected": "action_required",
+          "predicted": "scheduling",
+          "correct": false,
+          "ms": 2674
+        },
+        {
+          "id": "g-fyi-011",
+          "expected": "fyi",
+          "predicted": "fyi",
+          "correct": true,
+          "ms": 2469
+        },
+        {
+          "id": "w-fyi-205",
+          "expected": "fyi",
+          "predicted": "fyi",
+          "correct": true,
+          "ms": 1668
+        },
+        {
+          "id": "i-promo-107",
+          "expected": "newsletter_promo",
+          "predicted": null,
+          "correct": false,
+          "ms": 2871
+        },
+        {
+          "id": "g-reply-012",
+          "expected": "awaiting_reply",
+          "predicted": "awaiting_reply",
+          "correct": true,
+          "ms": 2524
+        }
+      ]
+    },
+    {
+      "model": "qwen3:4b",
+      "note": "reasoning model — expected to fail bounded structured calls",
+      "attempted": 6,
+      "validOutputs": 0,
+      "categoryCorrect": 0,
+      "urgencyWithin1": 0,
+      "failures": 6,
+      "avgLatencyMs": 30645,
+      "totalTokens": 0,
+      "costUsd": 0,
+      "perItem": [
+        {
+          "id": "g-lease-001",
+          "expected": "action_required",
+          "predicted": null,
+          "correct": false,
+          "ms": 49870,
+          "err": "Model \"qwen3:4b\" returned no answer content — it looks like a reasoning model that spent the token budget \"thinking\" (finish_reason=length). CORTEX's bounded structured calls need a NON-reasoning model (e.g. qwen2.5-instruct / deepseek-chat), or reasoning disabled."
+        },
+        {
+          "id": "g-invoice-002",
+          "expected": "financial",
+          "predicted": null,
+          "correct": false,
+          "ms": 28878,
+          "err": "Model \"qwen3:4b\" returned no answer content — it looks like a reasoning model that spent the token budget \"thinking\" (finish_reason=length). CORTEX's bounded structured calls need a NON-reasoning model (e.g. qwen2.5-instruct / deepseek-chat), or reasoning disabled."
+        },
+        {
+          "id": "g-passport-003",
+          "expected": "action_required",
+          "predicted": null,
+          "correct": false,
+          "ms": 27586,
+          "err": "Model \"qwen3:4b\" returned no answer content — it looks like a reasoning model that spent the token budget \"thinking\" (finish_reason=length). CORTEX's bounded structured calls need a NON-reasoning model (e.g. qwen2.5-instruct / deepseek-chat), or reasoning disabled."
+        },
+        {
+          "id": "g-contract-004",
+          "expected": "awaiting_reply",
+          "predicted": null,
+          "correct": false,
+          "ms": 26178,
+          "err": "Model \"qwen3:4b\" returned no answer content — it looks like a reasoning model that spent the token budget \"thinking\" (finish_reason=length). CORTEX's bounded structured calls need a NON-reasoning model (e.g. qwen2.5-instruct / deepseek-chat), or reasoning disabled."
+        },
+        {
+          "id": "g-news-005",
+          "expected": "newsletter_promo",
+          "predicted": null,
+          "correct": false,
+          "ms": 25816,
+          "err": "Model \"qwen3:4b\" returned no answer content — it looks like a reasoning model that spent the token budget \"thinking\" (finish_reason=length). CORTEX's bounded structured calls need a NON-reasoning model (e.g. qwen2.5-instruct / deepseek-chat), or reasoning disabled."
+        },
+        {
+          "id": "g-promo-006",
+          "expected": "newsletter_promo",
+          "predicted": null,
+          "correct": false,
+          "ms": 25539,
+          "err": "Model \"qwen3:4b\" returned no answer content — it looks like a reasoning model that spent the token budget \"thinking\" (finish_reason=length). CORTEX's bounded structured calls need a NON-reasoning model (e.g. qwen2.5-instruct / deepseek-chat), or reasoning disabled."
+        }
+      ]
+    }
+  ]
+}

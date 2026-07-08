@@ -1,0 +1,115 @@
+# =============================================================================
+# CORTEX — all-in-one, self-hosted stack (Constraint §1). Everything runs on the
+# operator's box. Ports bind to 127.0.0.1 ONLY: reach the dashboard over Tailscale
+# or a reverse proxy, never by opening a public port (Constraint §10).
+#
+#   cp .env.example .env   # fill in secrets
+#   docker compose up      # Phase 0: db + migrate + dashboard
+#
+# The `workers` service is Phase 1+ and gated behind a profile:
+#   docker compose --profile workers up
+# =============================================================================
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cortex}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cortex}
+      POSTGRES_DB: ${POSTGRES_DB:-cortex}
+    volumes:
+      # NOTE (Constraint §5): put this volume on an encrypted disk (LUKS / dm-crypt)
+      # for disk-level encryption. Message bodies are ALSO encrypted at the column
+      # level, so a stolen disk without CORTEX_ENCRYPTION_KEY yields no plaintext.
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - '127.0.0.1:5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-cortex} -d ${POSTGRES_DB:-cortex}']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.workers
+    command: ['pnpm', 'db:migrate']
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-cortex}:${POSTGRES_PASSWORD:-cortex}@db:5432/${POSTGRES_DB:-cortex}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: 'no'
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://${POSTGRES_USER:-cortex}:${POSTGRES_PASSWORD:-cortex}@db:5432/${POSTGRES_DB:-cortex}
+      CORTEX_TZ: ${CORTEX_TZ:-UTC}
+      CORTEX_AUTH_SECRET: ${CORTEX_AUTH_SECRET:-}
+      # Both of these are required (alongside CORTEX_AUTH_SECRET) for the login
+      # gate to be ENFORCED — see apps/dashboard/lib/auth.ts:authConfigured().
+      # Without them the (secure) layout renders unauthenticated (fails open).
+      CORTEX_OPERATOR_EMAIL: ${CORTEX_OPERATOR_EMAIL:-}
+      CORTEX_OPERATOR_PASSWORD_HASH: ${CORTEX_OPERATOR_PASSWORD_HASH:-}
+      CORTEX_ENCRYPTION_KEY: ${CORTEX_ENCRYPTION_KEY:-}
+    ports:
+      - '127.0.0.1:3000:3000'
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # Ingestion + intelligence, always-on: the scheduler runs a sync cycle every
+  # CORTEX_SYNC_INTERVAL_MIN and the nightly Opus brief at CORTEX_BRIEF_HOUR.
+  # Gated behind a profile: `docker compose --profile workers up`.
+  workers:
+    build:
+      context: .
+      dockerfile: Dockerfile.workers
+    profiles: ['workers']
+    command: ['pnpm', '--filter', '@cortex/workers', 'serve']
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://${POSTGRES_USER:-cortex}:${POSTGRES_PASSWORD:-cortex}@db:5432/${POSTGRES_DB:-cortex}
+      CORTEX_TZ: ${CORTEX_TZ:-UTC}
+      CORTEX_ENCRYPTION_KEY: ${CORTEX_ENCRYPTION_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # WhatsApp is only ingested when the bridge is running (--profile whatsapp)
+      # AND a token is set; the adapter no-ops otherwise.
+      WHATSAPP_BRIDGE_URL: http://wa-bridge:8080
+      WHATSAPP_BRIDGE_TOKEN: ${WHATSAPP_BRIDGE_TOKEN:-}
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # Phase 4: isolated, READ-ONLY WhatsApp bridge (whatsmeow). Not started by
+  # default. It owns the unofficial, ToS-violating, ban-risked connection; killing
+  # it costs one connector, not the brain (spec §7). Never publish its port.
+  #   docker compose --profile whatsapp --profile workers up
+  # then read the QR from its logs and scan it with your BURNER number:
+  #   docker compose logs -f wa-bridge
+  wa-bridge:
+    build:
+      context: ./services/whatsapp-bridge
+    profiles: ['whatsapp']
+    environment:
+      WA_STORE: /data/wa.db
+      WHATSAPP_BRIDGE_TOKEN: ${WHATSAPP_BRIDGE_TOKEN:?set WHATSAPP_BRIDGE_TOKEN to run the bridge}
+    volumes:
+      - wa-session:/data
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  wa-session:

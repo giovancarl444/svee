@@ -1,0 +1,38 @@
+{
+  "name": "@cortex/workers",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "serve": "tsx src/index.ts serve",
+    "ingest": "tsx src/index.ts ingest",
+    "triage": "tsx src/index.ts triage",
+    "sync": "tsx src/index.ts sync",
+    "synthesize": "tsx src/index.ts synthesize",
+    "doctor": "tsx src/index.ts doctor",
+    "benchmark": "tsx src/demo/benchmark.ts",
+    "gmail:auth": "tsx src/gmail-auth.ts",
+    "connect:gmail": "tsx src/gmail-auth.ts",
+    "outlook:auth": "tsx src/outlook-auth.ts",
+    "connect:outlook": "tsx src/outlook-auth.ts",
+    "hash-password": "tsx src/hash-password.ts",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@cortex/ai": "workspace:*",
+    "@cortex/calendar": "workspace:*",
+    "@cortex/config": "workspace:*",
+    "@cortex/core": "workspace:*",
+    "@cortex/db": "workspace:*",
+    "@cortex/gmail": "workspace:*",
+    "@cortex/imap": "workspace:*",
+    "@cortex/imessage": "workspace:*",
+    "@cortex/whatsapp": "workspace:*",
+    "drizzle-orm": "0.45.2",
+    "pino": "10.3.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.4"
+  }
+}
