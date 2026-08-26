@@ -74,7 +74,7 @@ slippage_bps   = (base_bps + size_impact) × volatility_adj × random_noise
 exec_price     = ref_price × (1 ± slippage_bps/10⁴)   # adverse side only
 ```
 
-Examples: $500 into $500k liquidity ≈ 13bps (~0.13%). $2,000 into $40k liquidity ≈ 500bps+ — you get wrecked for size, exactly like real microcaps. Cap at 5000bps (50%); beyond that the order **fails as insufficient liquidity** rather than filling absurdly.
+Examples: $500 into $500k liquidity ≈ 40bps (~0.4%, matches constant-product 2ΔB/B). $2,000 into $40k liquidity ≈ 350bps+ once the low-volume multiplier applies — you get wrecked for size, exactly like real microcaps. Cap at 5000bps (50%); beyond that the order **fails as insufficient liquidity** rather than filling absurdly.
 
 Config lives in `engine/constants.ts` — tunable without touching logic.
 
