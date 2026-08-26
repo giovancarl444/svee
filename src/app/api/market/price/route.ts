@@ -1,5 +1,6 @@
 import { fetchQuotes } from "@/lib/market-data/dexscreener";
 import { cached } from "@/lib/market-data/cache";
+import { recordPrice } from "@/lib/market-data/history";
 import { apiOk, apiErr } from "@/lib/api/respond";
 import type { Chain } from "@/types/trading";
 
@@ -32,6 +33,8 @@ export async function GET(request: Request) {
 
   try {
     const quotes = await cached(cacheKey, 3_000, () => fetchQuotes(keys));
+    // Feed the live-history recorder (backs the chart when OHLCV is down)
+    for (const q of quotes.values()) recordPrice(q.key, q.priceUsd);
     return apiOk({
       quotes: [...quotes.values()],
       asOf: new Date().toISOString(),

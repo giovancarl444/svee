@@ -1,5 +1,9 @@
-import { fetchCandles } from "@/lib/market-data/geckoterminal";
-import { cached } from "@/lib/market-data/cache";
+import { fetchCandles, type Candle } from "@/lib/market-data/geckoterminal";
+import { cacheGet, cacheSet } from "@/lib/market-data/cache";
+import {
+  resampleHistory,
+  historyLength,
+} from "@/lib/market-data/history";
 import { apiOk, apiErr } from "@/lib/api/respond";
 import type { Chain } from "@/types/trading";
 
@@ -9,7 +13,11 @@ const CHAINS: Chain[] = ["solana", "ethereum", "base", "bnb"];
 const TFS = ["1m", "5m", "15m", "1h", "4h", "1d"] as const;
 type Tf = (typeof TFS)[number];
 
-/** GET /api/market/candles?chain=solana&address=…&tf=15m&limit=300 — 60s cache */
+/**
+ * GET /api/market/candles?chain=solana&address=…&tf=15m&limit=300
+ * Source chain: GeckoTerminal OHLCV → locally-recorded quote history.
+ * Empty results are never cached (a rate-limited blip must not poison TTL).
+ */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const chain = url.searchParams.get("chain") as Chain | null;
@@ -26,15 +34,39 @@ export async function GET(request: Request) {
   }
   const tf = tfParam as Tf;
 
-  try {
-    const candles = await cached(
-      `candles:${chain}:${address.toLowerCase()}:${tf}:${limit}`,
-      60_000,
-      () => fetchCandles(chain, address, tf, limit),
-    );
-    return apiOk({ candles, timeframe: tf });
-  } catch (e) {
-    console.error("[api/market/candles]", e);
-    return apiErr(502, "MARKET_DATA_DOWN", "provider unreachable");
+  const key = `candles:${chain}:${address.toLowerCase()}:${tf}:${limit}`;
+  const hit = cacheGet<Candle[]>(key);
+  if (hit && hit.length > 0) {
+    return apiOk({ candles: hit, timeframe: tf, source: "geckoterminal" });
   }
+
+  // 1) upstream OHLCV
+  try {
+    const candles = await fetchCandles(chain, address, tf, limit);
+    if (candles.length > 0) {
+      cacheSet(key, candles, 60_000);
+      return apiOk({ candles, timeframe: tf, source: "geckoterminal" });
+    }
+  } catch (e) {
+    console.error("[api/market/candles] gt failed:", e instanceof Error ? e.message : e);
+  }
+
+  // 2) locally-recorded live-quote history (accumulates while you watch)
+  const tokenKey = `${chain}:${address.toLowerCase()}`;
+  const local = resampleHistory(tokenKey, tf);
+  if (local.length > 0) {
+    return apiOk({
+      candles: local.slice(-limit),
+      timeframe: tf,
+      source: "live-history",
+      coveragePoints: historyLength(tokenKey),
+    });
+  }
+
+  return apiOk({
+    candles: [],
+    timeframe: tf,
+    source: "none",
+    hint: "chart warming up — candles appear after ~2 min of live watching",
+  });
 }
