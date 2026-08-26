@@ -76,12 +76,6 @@ function pairToQuote(p: DexPair): TokenQuote | null {
 }
 
 /** Pick the most liquid pair when multiple DEXs list the same token. */
-function bestPair(pairs: DexPair[], chain: string): DexPair | undefined {
-  return pairs
-    .filter((p) => p.chainId === chain)
-    .sort((a, b) => (b.liquidity?.usd ?? 0) - (a.liquidity?.usd ?? 0))[0];
-}
-
 async function dsFetch(path: string): Promise<unknown> {
   const res = await fetch(`${BASE}${path}`, {
     headers: { accept: "application/json" },
@@ -112,10 +106,25 @@ export async function fetchQuotes(
         const data = (await dsFetch(`/tokens/${batch.join(",")}`)) as {
           pairs: DexPair[] | null;
         };
+        const pairs = data.pairs ?? [];
+        // Index every returned pair by base-token address so each requested
+        // address resolves against ITS OWN most liquid pair — but only within
+        // the requested chain (EVM addresses can collide across chains).
+        const bestByAddress = new Map<string, DexPair>();
+        for (const p of pairs) {
+          if (!p.priceUsd || p.chainId !== CHAIN_IDS[chain]) continue;
+          const addr = p.baseToken.address.toLowerCase();
+          const current = bestByAddress.get(addr);
+          if (
+            !current ||
+            (p.liquidity?.usd ?? 0) > (current.liquidity?.usd ?? 0)
+          ) {
+            bestByAddress.set(addr, p);
+          }
+        }
         for (const addr of batch) {
-          const pair = bestPair(data.pairs ?? [], CHAIN_IDS[chain]);
-          if (!pair || pair.baseToken.address.toLowerCase() !== addr.toLowerCase())
-            continue;
+          const pair = bestByAddress.get(addr.toLowerCase());
+          if (!pair) continue;
           const q = pairToQuote(pair);
           if (q && q.priceUsd > 0) out.set(q.key, q);
         }
