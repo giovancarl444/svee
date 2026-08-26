@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -18,6 +19,7 @@ import { api } from "@/lib/api/client";
 import { fmtPnl, fmtPct } from "@/lib/format";
 import type { Trade } from "@/types/trading";
 import type { PlaceOrderRequest } from "@/types/trading";
+import type { Chain } from "@/types/trading";
 
 /** Default instrument until search/routing lands.
  *  BONK chosen as default because its Raydium pool has full GT OHLCV
@@ -34,6 +36,24 @@ const TIMEFRAMES = ["1m", "5m", "15m", "1h", "4h", "1d"];
  * [token analytics | chart | order panel] + bottom tape. All live.
  */
 export default function TradePage() {
+  const searchParams = useSearchParams();
+  // Allow ?address=&symbol=&chain= to deep-link a token (e.g. from Callouts).
+  const DEFAULT = useMemo<{ chain: Chain; address: string; symbol: string }>(() => {
+    const addr = searchParams.get("address");
+    const sym = searchParams.get("symbol");
+    const ch = searchParams.get("chain");
+    if (addr && sym) {
+      const chain: Chain =
+        ch === "ethereum" || ch === "base" || ch === "bnb" ? (ch as Chain) : "solana";
+      return { chain, address: addr, symbol: sym };
+    }
+    return {
+      chain: "solana",
+      address: "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
+      symbol: "BONK",
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
   const { chain, address, symbol } = DEFAULT;
   const [timeframe, setTimeframe] = useState("15m");
 
