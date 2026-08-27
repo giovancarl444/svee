@@ -20,18 +20,12 @@ async function readTrades(): Promise<any[]> {
   }
 }
 
-// live mc for open trades (so the dashboard can show current PnL)
-async function liveMc(mint: string): Promise<number> {
-  try {
-    const res = await fetch(`https://frontend-api-v3.pump.fun/coins/${mint}`, {
-      headers: { Accept: "application/json" },
-    });
-    if (!res.ok) return 0;
-    const j = (await res.json()) as any;
-    return Number(j?.market_cap ?? 0);
-  } catch {
-    return 0;
-  }
+// live mc for open trades: read the latest path sample written by the watcher
+// (already USD via chain-native mcUsd). No pump.fun API call (CF-flaky, SOL units).
+async function liveMcFromPath(t: any): Promise<number> {
+  const p = t.path;
+  if (Array.isArray(p) && p.length > 0) return p[p.length - 1].mc;
+  return 0;
 }
 
 export async function GET(req: NextRequest) {
@@ -42,16 +36,17 @@ export async function GET(req: NextRequest) {
     const enriched = await Promise.all(
       trades.map(async (t: any) => {
         if (t.outcome !== "OPEN") return t;
-        const mc = await liveMc(t.mint);
+        const mc = await liveMcFromPath(t);
         const pnlPct = t.ourMc > 0 ? Math.round(((mc - t.ourMc) / t.ourMc) * 1000) / 10 : 0;
         return { ...t, liveMc: Math.round(mc), livePnlPct: pnlPct };
       }),
     );
     const wins = trades.filter((t: any) => t.outcome === "WIN").length;
     const stops = trades.filter((t: any) => t.outcome === "STOP").length;
+    const copyExits = trades.filter((t: any) => t.outcome === "HISSELL").length;
     return apiOk({
       trades: enriched,
-      summary: { total: trades.length, open: open.length, wins, stops },
+      summary: { total: trades.length, open: open.length, wins, stops, copyExits },
     });
   } catch (e) {
     return apiErr(500, "read_error", String(e));
