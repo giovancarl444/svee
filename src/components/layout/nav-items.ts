@@ -5,6 +5,7 @@ import {
   Wallet,
   Trophy,
   Radio,
+  LayoutDashboard,
   Settings,
   type LucideIcon,
 } from "lucide-react";
@@ -18,6 +19,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { label: "Discover", href: "/discover", icon: Compass },
   { label: "Pulse", href: "/pulse", icon: Zap },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Callouts", href: "/callouts", icon: Radio },
   { label: "Trade", href: "/trade", icon: CandlestickChart },
   { label: "Portfolio", href: "/portfolio", icon: Wallet },
